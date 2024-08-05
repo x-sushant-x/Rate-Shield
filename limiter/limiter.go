@@ -7,3 +7,8 @@ type RequestData struct {
 	IP       string
 	Time     time.Time
 }
+
+type Limiter struct {
+}
+
+func (l *Limiter) Start() {}
