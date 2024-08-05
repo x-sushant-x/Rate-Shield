@@ -11,7 +11,8 @@ var (
 )
 
 type configuration struct {
-	TokenAddingRate int `json:"tokenAddingRate"`
+	TokenAddingRate     int `json:"tokenAddingRate"`
+	TokenBucketCapacity int `json:"tokenBucketCapacity"`
 }
 
 func LoadConfig() {

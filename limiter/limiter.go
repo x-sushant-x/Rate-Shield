@@ -8,7 +8,6 @@ type RequestData struct {
 	Time     time.Time
 }
 
-type Limiter struct {
-}
+type Limiter struct{}
 
-func (l *Limiter) Start() {}
+func (l *Limiter) CheckLimit() {}
