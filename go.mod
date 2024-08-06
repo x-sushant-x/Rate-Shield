@@ -1,4 +1,4 @@
-module github.com/x-sushant-x/ThrottleWatch
+module github.com/x-sushant-x/RateShield
 
 go 1.22.5
 

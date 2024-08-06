@@ -16,4 +16,7 @@ require (
 	github.com/valyala/fasthttp v1.55.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect
 	golang.org/x/sys v0.23.0 // indirect
+	github.com/x-sushant-x/ThrottleWatch/config v0.0.0
 )
+
+replace github.com/x-sushant-x/ThrottleWatch => ../

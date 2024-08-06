@@ -3,7 +3,7 @@ package limiter
 import (
 	"time"
 
-	"github.com/x-sushant-x/ThrottleWatch/config"
+	"github.com/x-sushant-x/RateShield/config"
 )
 
 type TokenBuckets struct {
