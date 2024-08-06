@@ -1,4 +1,4 @@
 {
   "tokenAddingRate": 2,
-  "tokenBucketCapacity": 10
+  "tokenBucketCapacity": 4
 }

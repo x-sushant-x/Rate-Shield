@@ -1,9 +1,16 @@
 package limiter
 
 import (
+	"fmt"
+	"sync"
 	"time"
 
 	"github.com/x-sushant-x/RateShield/config"
+)
+
+var (
+	TokenBucketI *TokenBuckets
+	once         sync.Once
 )
 
 type TokenBuckets struct {
@@ -15,6 +22,15 @@ type Bucket struct {
 	CreatedAt int64
 	Capacity  int
 	Available int
+}
+
+func getTokenBucketInstance() *TokenBuckets {
+	once.Do(func() {
+		TokenBucketI = &TokenBuckets{
+			buckets: map[string]*Bucket{},
+		}
+	})
+	return TokenBucketI
 }
 
 func (b *TokenBuckets) SpawnNew(ip string, capacity int) *Bucket {
@@ -45,6 +61,7 @@ func (b *TokenBuckets) AddTokens() {
 }
 
 func (b *TokenBuckets) ProcessRequest(ip string) bool {
+	fmt.Println("IP: " + ip)
 	bucket := b.GetBucket(ip)
 
 	isTokenAvailable := b.checkAvailiblity(bucket)
