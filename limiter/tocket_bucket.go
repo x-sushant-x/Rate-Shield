@@ -22,6 +22,7 @@ type Bucket struct {
 	CreatedAt int64
 	Capacity  int
 	Available int
+	Endpoint  int
 }
 
 func getTokenBucketInstance() *TokenBuckets {
@@ -33,7 +34,7 @@ func getTokenBucketInstance() *TokenBuckets {
 	return TokenBucketI
 }
 
-func (b *TokenBuckets) SpawnNew(ip string, capacity int) *Bucket {
+func (b *TokenBuckets) SpawnNew(ip string, endpoint string, capacity int) *Bucket {
 	bucket := &Bucket{
 		ClientIP:  ip,
 		CreatedAt: time.Now().Unix(),
@@ -60,9 +61,9 @@ func (b *TokenBuckets) AddTokens() {
 	}
 }
 
-func (b *TokenBuckets) ProcessRequest(ip string) bool {
+func (b *TokenBuckets) ProcessRequest(ip, endpoint string) bool {
 	fmt.Println("IP: " + ip)
-	bucket := b.GetBucket(ip)
+	bucket := b.GetBucket(ip, endpoint)
 
 	isTokenAvailable := b.checkAvailiblity(bucket)
 	if !isTokenAvailable {
@@ -73,11 +74,11 @@ func (b *TokenBuckets) ProcessRequest(ip string) bool {
 	return true
 }
 
-func (b *TokenBuckets) GetBucket(ip string) *Bucket {
+func (b *TokenBuckets) GetBucket(ip, endpoint string) *Bucket {
 	bucket, found := b.buckets[ip]
 	if !found {
 		capacity := config.Config.TokenBucketCapacity
-		return b.SpawnNew(ip, capacity)
+		return b.SpawnNew(ip, endpoint, capacity)
 	}
 	return bucket
 }

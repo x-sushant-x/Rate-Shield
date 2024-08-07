@@ -27,3 +27,21 @@ func Connect() {
 		log.Fatal("can not connect to redis: " + cmd.Err().Error())
 	}
 }
+
+func SetJSONObject(key string, val interface{}) error {
+	ctx := context.Background()
+	err := Client.JSONSet(ctx, key, ".", val).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetJSONObject(key string) ([]byte, error) {
+	ctx := context.Background()
+	res, err := Client.JSONGet(ctx, key, ".").Result()
+	if err != nil {
+		return nil, err
+	}
+	return []byte(res), nil
+}

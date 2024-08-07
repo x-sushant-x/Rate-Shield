@@ -1,7 +1,6 @@
 package limiter
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -20,6 +19,14 @@ func StartSvc() {
 		TokenBucket: *getTokenBucketInstance(),
 	}
 
+	StartAddTokenJob()
+}
+
+func (l *Limiter) CheckLimit(ip, endpoint string) bool {
+	return l.TokenBucket.ProcessRequest(ip, endpoint)
+}
+
+func StartAddTokenJob() {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		panic(err)
@@ -34,9 +41,4 @@ func StartSvc() {
 	}
 
 	s.Start()
-	fmt.Println("Add token job started")
-}
-
-func (l *Limiter) CheckLimit(ip string) bool {
-	return l.TokenBucket.ProcessRequest(ip)
 }
