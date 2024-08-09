@@ -1,0 +1,10 @@
+{
+  "buckets": [
+    {
+      "endpoint": "/api/v1/get-users",
+      "bucket_size": 5,
+      "token_add_rate": 2,
+      "token_add_time": 30
+    }
+  ]
+}

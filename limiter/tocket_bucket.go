@@ -1,11 +1,13 @@
 package limiter
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/x-sushant-x/RateShield/config"
+	"github.com/x-sushant-x/RateShield/models"
+	"github.com/x-sushant-x/RateShield/redis"
 )
 
 var (
@@ -13,57 +15,56 @@ var (
 	once         sync.Once
 )
 
-type TokenBuckets struct {
-	buckets map[string]*Bucket
-}
+type TokenBuckets struct{}
 
-type Bucket struct {
-	ClientIP  string
-	CreatedAt int64
-	Capacity  int
-	Available int
-	Endpoint  int
-}
-
-func getTokenBucketInstance() *TokenBuckets {
-	once.Do(func() {
-		TokenBucketI = &TokenBuckets{
-			buckets: map[string]*Bucket{},
-		}
-	})
-	return TokenBucketI
-}
-
-func (b *TokenBuckets) SpawnNew(ip string, endpoint string, capacity int) *Bucket {
-	bucket := &Bucket{
-		ClientIP:  ip,
-		CreatedAt: time.Now().Unix(),
-		Capacity:  capacity,
-		Available: capacity,
+func (b *TokenBuckets) SpawnNew(ip string, endpoint string, capacity int) error {
+	bucket := &models.Bucket{
+		ClientIP:        ip,
+		CreatedAt:       time.Now().Unix(),
+		Capacity:        capacity,
+		AvailableTokens: capacity,
+		Endpoint:        endpoint,
+		TokenAddRate:    2,
+		TokenAddTime:    30,
 	}
 
-	b.buckets[ip] = bucket
-	return bucket
-}
-
-func (b *TokenBuckets) AddTokens() {
-	addRate := config.Config.TokenAddingRate
-
-	for _, bucket := range b.buckets {
-		if bucket.Available < bucket.Capacity {
-			remaining := bucket.Capacity - bucket.Available
-			if remaining >= addRate {
-				bucket.Available += addRate
-				continue
-			}
-			bucket.Available = bucket.Capacity
-		}
+	key := ip + ":" + endpoint
+	err := redis.SetJSONObject(key, bucket)
+	if err != nil {
+		fmt.Println(err)
+		return err
 	}
+
+	return nil
 }
+
+func (b *TokenBuckets) GetBucket(ip, endpoint string) (models.Bucket, error) {
+	key := ip + ":" + endpoint
+	bytes, err := redis.GetJSONObject(key)
+	if err != nil {
+
+		fmt.Println(err)
+		return models.Bucket{}, err
+	}
+
+	var bucket models.Bucket
+	err = json.Unmarshal(bytes, &bucket)
+	if err != nil {
+		fmt.Println(err)
+		return models.Bucket{}, err
+	}
+
+	return bucket, nil
+}
+
+func (b *TokenBuckets) AddTokens() {}
 
 func (b *TokenBuckets) ProcessRequest(ip, endpoint string) bool {
-	fmt.Println("IP: " + ip)
-	bucket := b.GetBucket(ip, endpoint)
+	bucket, err := b.GetBucket(ip, endpoint)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
 
 	isTokenAvailable := b.checkAvailiblity(bucket)
 	if !isTokenAvailable {
@@ -74,19 +75,11 @@ func (b *TokenBuckets) ProcessRequest(ip, endpoint string) bool {
 	return true
 }
 
-func (b *TokenBuckets) GetBucket(ip, endpoint string) *Bucket {
-	bucket, found := b.buckets[ip]
-	if !found {
-		capacity := config.Config.TokenBucketCapacity
-		return b.SpawnNew(ip, endpoint, capacity)
-	}
-	return bucket
+func (b *TokenBuckets) checkAvailiblity(bucket models.Bucket) bool {
+	return bucket.AvailableTokens > 0
 }
 
-func (b *TokenBuckets) checkAvailiblity(bucket *Bucket) bool {
-	return bucket.Available > 0
-}
+func (b *TokenBuckets) removeToken(bucket models.Bucket) {
+	bucket.AvailableTokens = bucket.AvailableTokens - 1
 
-func (b *TokenBuckets) removeToken(bucket *Bucket) {
-	bucket.Available = bucket.Available - 1
 }
