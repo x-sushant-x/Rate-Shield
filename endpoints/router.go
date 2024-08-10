@@ -13,7 +13,7 @@ func StartTestingRouter() {
 
 	app.Use(checkRateLimit)
 
-	app.Get("/", getReq)
+	app.Get("/api/v1/get-data", getReq)
 
 	go func() {
 		log.Fatal(app.Listen(":3000"))
@@ -27,11 +27,10 @@ func getReq(c *fiber.Ctx) error {
 }
 
 func checkRateLimit(c *fiber.Ctx) error {
-	if valid := limiter.RateLimiter.CheckLimit(c.IP()); !valid {
+	if valid := limiter.RateLimiter.CheckLimit(c.IP(), c.Path()); !valid {
 		return c.Status(http.StatusTooManyRequests).JSON(map[string]string{
 			"error": "Too many requests",
 		})
 	}
-
 	return c.Next()
 }

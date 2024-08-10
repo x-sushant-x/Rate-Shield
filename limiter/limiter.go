@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -15,14 +16,12 @@ type Limiter struct {
 }
 
 func StartSvc() {
-	RateLimiter = &Limiter{
-		TokenBucket: *getTokenBucketInstance(),
-	}
-
+	RateLimiter = &Limiter{}
 	StartAddTokenJob()
 }
 
 func (l *Limiter) CheckLimit(ip, endpoint string) bool {
+	fmt.Println("Checking request")
 	return l.TokenBucket.ProcessRequest(ip, endpoint)
 }
 
