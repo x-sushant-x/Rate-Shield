@@ -2,9 +2,9 @@ package redis
 
 import (
 	"context"
-	"log"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -24,7 +24,9 @@ func Connect() {
 
 	cmd := Client.Ping(context.TODO())
 	if cmd.Err() != nil {
-		log.Fatal("can not connect to redis: " + cmd.Err().Error())
+		log.Error().Msgf("unable to connect to redis: " + cmd.Err().Error())
+	} else {
+		log.Info().Msg("Connected to redis successfully")
 	}
 }
 

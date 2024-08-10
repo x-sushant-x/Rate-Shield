@@ -1,8 +1,7 @@
 package config
 
 import (
-	"log"
-
+	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
 
@@ -22,11 +21,11 @@ func LoadConfig() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatal("unable to read config: " + err.Error())
+		log.Error().Msgf("error reading config file: %s", err.Error())
 	}
 
 	err = viper.Unmarshal(&Config)
 	if err != nil {
-		log.Fatal("unable to marshal config: " + err.Error())
+		log.Error().Msgf("error while marshal config: %s" + err.Error())
 	}
 }

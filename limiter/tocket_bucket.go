@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/config"
 	"github.com/x-sushant-x/RateShield/models"
 	"github.com/x-sushant-x/RateShield/redis"
@@ -21,9 +22,6 @@ type TokenBuckets struct{}
 func (b *TokenBuckets) SpawnNew(key string, capacity int) (models.Bucket, error) {
 	ip := strings.Split(key, ":")[0]
 	endpoint := strings.Split(key, ":")[1]
-
-	fmt.Println("IP: " + ip)
-	fmt.Println("Endpoint: " + endpoint)
 
 	bucket := &models.Bucket{
 		ClientIP:        ip,
@@ -40,13 +38,11 @@ func (b *TokenBuckets) SpawnNew(key string, capacity int) (models.Bucket, error)
 		fmt.Println(err)
 		return models.Bucket{}, err
 	}
-	fmt.Println("new bucket spawned")
 
 	return *bucket, nil
 }
 
 func (b *TokenBuckets) GetBucket(key string) (models.Bucket, error) {
-	fmt.Println("key: " + key)
 	bytes, err := redis.GetJSONObject(key)
 	if err != nil {
 		fmt.Println(err)
@@ -57,7 +53,7 @@ func (b *TokenBuckets) GetBucket(key string) (models.Bucket, error) {
 	if len(bytes) == 0 {
 		bucket, err := b.SpawnNew(key, config.Config.TokenBucketCapacity)
 		if err != nil {
-			fmt.Println("error spawning new bucket: " + err.Error())
+			log.Error().Msgf("error spawning new bucket: %s" + err.Error())
 			return models.Bucket{}, err
 		}
 		return bucket, nil
@@ -66,7 +62,7 @@ func (b *TokenBuckets) GetBucket(key string) (models.Bucket, error) {
 	var bucket models.Bucket
 	err = json.Unmarshal(bytes, &bucket)
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Msgf("error while marshalling redis bucket: %s" + err.Error())
 		return models.Bucket{}, err
 	}
 
@@ -74,30 +70,29 @@ func (b *TokenBuckets) GetBucket(key string) (models.Bucket, error) {
 }
 
 func (b *TokenBuckets) AddTokens() {
-	fmt.Println("Running Add Tokens Job")
 	ctx := context.TODO()
 	keys, err := redis.Client.Keys(ctx, "*").Result()
 	if err != nil {
-		fmt.Println("unable to get all keys: " + err.Error())
+		log.Error().Msgf("unable to get all redis keys: %s", err.Error())
 		return
 	}
 
 	if len(keys) == 0 {
-		fmt.Println("no buckets found in redis")
+		log.Error().Msgf("no buckets found in redis")
 		return
 	}
 
 	for _, key := range keys {
 		bytes, err := redis.GetJSONObject(key)
 		if err != nil {
-			fmt.Println("Error fetching bucket:", err)
+			log.Error().Msgf("error fetching bucket: %s", err.Error())
 			continue
 		}
 
 		var bucket models.Bucket
 		err = json.Unmarshal(bytes, &bucket)
 		if err != nil {
-			fmt.Println("Error unmarshaling bucket:", err)
+			log.Error().Msgf("error marshalling bucket: %s", err.Error())
 			continue
 		}
 
@@ -109,11 +104,9 @@ func (b *TokenBuckets) AddTokens() {
 			}
 			err := redis.SetJSONObject(key, &bucket)
 			if err != nil {
-				fmt.Println("unable to save updated bucket to redis: " + err.Error())
+				log.Error().Msgf("unable to save updated bucket in redis: %s", err.Error())
 				continue
 			}
-		} else {
-			fmt.Println("Bucket already full")
 		}
 	}
 }
@@ -122,23 +115,21 @@ func (b *TokenBuckets) ProcessRequest(ip, endpoint string) bool {
 	key := ip + ":" + endpoint
 	bucket, err := b.GetBucket(key)
 	if err != nil {
-		fmt.Println("error getting bucket" + err.Error())
+		log.Error().Msgf("error while getting bucket %s" + err.Error())
 		return false
 	}
 
 	isTokenAvailable := b.checkAvailiblity(bucket)
 	if !isTokenAvailable {
-		fmt.Println("total available tokens: ", bucket.AvailableTokens)
 		return false
 	}
 
 	bucket.AvailableTokens = bucket.AvailableTokens - 1
 	err = redis.SetJSONObject(key, bucket)
 	if err != nil {
-		fmt.Println("error while storing removed token bucket to redis: " + err.Error())
+		log.Error().Msgf("error while storing removed token bucket to redis: %s" + err.Error())
 		return false
 	}
-
 	return true
 }
 
