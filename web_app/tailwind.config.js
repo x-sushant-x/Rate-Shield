@@ -3,9 +3,14 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-  ],  
+  ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'global-bg': '#D7D6DF',
+        'sidebar-bg': '#131719'
+      }
+    },
   },
   plugins: [],
 }
