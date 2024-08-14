@@ -9,7 +9,10 @@ export default {
       colors: {
         'global-bg': '#D7D6DF',
         'sidebar-bg': '#131719'
-      }
+      },
+      fontFamily: {
+        poppins: ["Poppins", "sans-serif"],
+      },
     },
   },
   plugins: [],
