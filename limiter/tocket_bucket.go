@@ -17,6 +17,10 @@ var (
 	TokenBucketI *TokenBuckets
 )
 
+const (
+	ExpireTime = time.Second * 30
+)
+
 type TokenBuckets struct{}
 
 func (b *TokenBuckets) SpawnNew(key string, capacity int) (models.Bucket, error) {
@@ -35,8 +39,13 @@ func (b *TokenBuckets) SpawnNew(key string, capacity int) (models.Bucket, error)
 
 	err := redis.SetJSONObject(key, bucket)
 	if err != nil {
-		fmt.Println(err)
+		log.Error().Msgf("error spawning new bucket: %s" + err.Error())
 		return models.Bucket{}, err
+	}
+
+	err = redis.Client.Expire(context.Background(), key, ExpireTime).Err()
+	if err != nil {
+		log.Error().Msgf("error setting expire time for bucket: %s" + err.Error())
 	}
 
 	return *bucket, nil
@@ -99,13 +108,18 @@ func (b *TokenBuckets) AddTokens() {
 		if bucket.AvailableTokens < bucket.Capacity {
 			if bucket.AvailableTokens+bucket.TokenAddRate > bucket.Capacity {
 				bucket.AvailableTokens = bucket.Capacity
+				err := redis.SetJSONObject(key, bucket)
+				if err != nil {
+					log.Error().Msgf("unable to save updated bucket in redis: %s", err.Error())
+					continue
+				}
 			} else {
 				bucket.AvailableTokens += bucket.TokenAddRate
-			}
-			err := redis.SetJSONObject(key, &bucket)
-			if err != nil {
-				log.Error().Msgf("unable to save updated bucket in redis: %s", err.Error())
-				continue
+				err := redis.SetJSONObject(key, bucket)
+				if err != nil {
+					log.Error().Msgf("unable to save updated bucket in redis: %s", err.Error())
+					continue
+				}
 			}
 		}
 	}
