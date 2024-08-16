@@ -2,6 +2,11 @@
 
 A completely configurable rate limiter that can apply rate limiting on individual APIs with individual rules.
 
+#### 📊 Dashboard
+
+<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/screenshot.png"></img>
+
+
 #### 🎯 Why?
 
 Why not? I've got some free time, so I decided to build something.
@@ -21,7 +26,3 @@ Why not? I've got some free time, so I decided to build something.
 
 - Current Limitation: Only supports Token Bucket Rate Limiting, which may not suit all scenarios.
 - Under Development: This is a hobby project and still in progress. Not recommended for production use—yet! Stay tuned for v1.0.
-
-#### 📊 Dashboard
-
-<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/screenshot.png"></img>
