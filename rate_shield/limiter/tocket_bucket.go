@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,21 +24,51 @@ const (
 
 type TokenBuckets struct{}
 
-func (b *TokenBuckets) SpawnNew(key string, capacity int) (models.Bucket, error) {
+func (b *TokenBuckets) SpawnNew(key string) (models.Bucket, error) {
+	var bucket models.Bucket
+
 	ip := strings.Split(key, ":")[0]
 	endpoint := strings.Split(key, ":")[1]
 
-	bucket := &models.Bucket{
-		ClientIP:        ip,
-		CreatedAt:       time.Now().Unix(),
-		Capacity:        capacity,
-		AvailableTokens: capacity,
-		Endpoint:        endpoint,
-		TokenAddRate:    2,
-		TokenAddTime:    60,
+	ruleBytes, found, err := redis.Get(endpoint)
+
+	if !found && err == nil {
+		capacity := config.Config.TokenBucketCapacity
+
+		bucket = models.Bucket{
+			ClientIP:        ip,
+			CreatedAt:       time.Now().Unix(),
+			Capacity:        capacity,
+			AvailableTokens: capacity,
+			Endpoint:        endpoint,
+			TokenAddRate:    config.Config.TokenAddingRate,
+			TokenAddTime:    60,
+		}
+	} else {
+		rule := string(ruleBytes)
+
+		if len(rule) != 0 {
+
+			c := strings.Split(rule, ":")[0]
+			t := strings.Split(rule, ":")[1]
+
+			capacity, _ := strconv.Atoi(c)
+			tokenAddRate, _ := strconv.Atoi(t)
+
+			bucket = models.Bucket{
+				ClientIP:        ip,
+				CreatedAt:       time.Now().Unix(),
+				Capacity:        capacity,
+				AvailableTokens: capacity,
+				Endpoint:        endpoint,
+				TokenAddRate:    tokenAddRate,
+				TokenAddTime:    60,
+			}
+
+		}
 	}
 
-	err := redis.SetJSONObject(key, bucket)
+	err = redis.SetJSONObject(key, bucket)
 	if err != nil {
 		log.Error().Msgf("error spawning new bucket: %s" + err.Error())
 		return models.Bucket{}, err
@@ -48,7 +79,7 @@ func (b *TokenBuckets) SpawnNew(key string, capacity int) (models.Bucket, error)
 		log.Error().Msgf("error setting expire time for bucket: %s" + err.Error())
 	}
 
-	return *bucket, nil
+	return bucket, nil
 }
 
 func (b *TokenBuckets) GetBucket(key string) (models.Bucket, error) {
@@ -60,7 +91,7 @@ func (b *TokenBuckets) GetBucket(key string) (models.Bucket, error) {
 
 	// No bucket is available in redis
 	if len(bytes) == 0 {
-		bucket, err := b.SpawnNew(key, config.Config.TokenBucketCapacity)
+		bucket, err := b.SpawnNew(key)
 		if err != nil {
 			log.Error().Msgf("error spawning new bucket: %s" + err.Error())
 			return models.Bucket{}, err
@@ -92,16 +123,9 @@ func (b *TokenBuckets) AddTokens() {
 	}
 
 	for _, key := range keys {
-		bytes, err := redis.GetJSONObject(key)
+		bucket, err := b.GetBucket(key)
 		if err != nil {
 			log.Error().Msgf("error fetching bucket: %s", err.Error())
-			continue
-		}
-
-		var bucket models.Bucket
-		err = json.Unmarshal(bytes, &bucket)
-		if err != nil {
-			log.Error().Msgf("error marshalling bucket: %s", err.Error())
 			continue
 		}
 

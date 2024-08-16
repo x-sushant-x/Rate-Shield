@@ -9,6 +9,7 @@ import (
 
 var (
 	Client *redis.Client
+	ctx    = context.Background()
 )
 
 func Connect() {
@@ -31,7 +32,6 @@ func Connect() {
 }
 
 func SetJSONObject(key string, val interface{}) error {
-	ctx := context.Background()
 	err := Client.JSONSet(ctx, key, ".", val).Err()
 	if err != nil {
 		return err
@@ -40,10 +40,20 @@ func SetJSONObject(key string, val interface{}) error {
 }
 
 func GetJSONObject(key string) ([]byte, error) {
-	ctx := context.Background()
 	res, err := Client.JSONGet(ctx, key, ".").Result()
 	if err != nil {
 		return nil, err
 	}
 	return []byte(res), nil
+}
+
+func Get(key string) ([]byte, bool, error) {
+	res, err := Client.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+
+	return []byte(res), true, nil
 }
