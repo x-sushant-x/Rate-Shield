@@ -1,6 +1,6 @@
-## <center>🚀 RateShield</center>
+## 🚀 RateShield
 
-<center>A completely configurable rate limiter that can <br> apply rate limiting on individual APIs with individual rules.</center>
+A completely configurable rate limiter that can apply rate limiting on individual APIs with individual rules.
 
 #### 🎯 Why?
 
