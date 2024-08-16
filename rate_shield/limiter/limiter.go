@@ -11,7 +11,7 @@ var (
 )
 
 type Limiter struct {
-	TokenBucket TokenBuckets
+	TokenBucket TokenBucketService
 }
 
 func StartSvc() {
