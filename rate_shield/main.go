@@ -9,7 +9,7 @@ import (
 	"github.com/x-sushant-x/RateShield/config"
 	"github.com/x-sushant-x/RateShield/endpoints"
 	"github.com/x-sushant-x/RateShield/limiter"
-	"github.com/x-sushant-x/RateShield/redis"
+	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
 
 func init() {
@@ -20,7 +20,7 @@ func init() {
 func main() {
 	config.LoadConfig()
 
-	err := redis.Connect()
+	err := redisClient.Connect()
 	if err != nil {
 		log.Fatal().Err(err).Msg(err.Error())
 	}

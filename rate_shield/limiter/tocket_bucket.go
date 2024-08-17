@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/config"
 	"github.com/x-sushant-x/RateShield/models"
-	"github.com/x-sushant-x/RateShield/redis"
+	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
 
 var (
@@ -26,10 +26,10 @@ const (
 
 type TokenBucketService struct{}
 
-func (b *TokenBucketService) SpawnNewBucket(key string) (models.Bucket, error) {
+func (b *TokenBucketService) spawnNewBucket(key string) (models.Bucket, error) {
 	ip, endpoint := parseKey(key)
 
-	rule, found, err := redis.GetRule(endpoint)
+	rule, found, err := redisClient.GetRule(endpoint)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching rule from Redis")
 		return models.Bucket{}, err
@@ -43,14 +43,14 @@ func (b *TokenBucketService) SpawnNewBucket(key string) (models.Bucket, error) {
 }
 
 func (b *TokenBucketService) GetBucket(key string) (models.Bucket, error) {
-	data, err := redis.GetJSONObject(key)
+	data, err := redisClient.GetJSONObject(key)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching bucket from Redis")
 		return models.Bucket{}, err
 	}
 
 	if len(data) == 0 {
-		return b.SpawnNewBucket(key)
+		return b.spawnNewBucket(key)
 	}
 
 	return b.unmarshalBucket(data)
@@ -58,7 +58,7 @@ func (b *TokenBucketService) GetBucket(key string) (models.Bucket, error) {
 
 func (b *TokenBucketService) AddTokens() {
 	ctx := context.TODO()
-	keys, err := redis.TokenBucketClient.Keys(ctx, "*").Result()
+	keys, err := redisClient.TokenBucketClient.Keys(ctx, "*").Result()
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to get Redis keys")
 		return
@@ -124,12 +124,12 @@ func (t *TokenBucketService) createBucketFromRule(ip, endpoint, rule string) mod
 }
 
 func (t *TokenBucketService) saveBucket(key string, bucket models.Bucket) error {
-	if err := redis.SetJSONObject(key, bucket); err != nil {
+	if err := redisClient.SetJSONObject(key, bucket); err != nil {
 		log.Error().Err(err).Msg("Error saving new bucket to Redis")
 		return err
 	}
 
-	if err := redis.TokenBucketClient.Expire(context.Background(), key, BucketExpireTime).Err(); err != nil {
+	if err := redisClient.TokenBucketClient.Expire(context.Background(), key, BucketExpireTime).Err(); err != nil {
 		log.Error().Err(err).Msg("Error setting bucket expiration in Redis")
 		return err
 	}
@@ -157,7 +157,7 @@ func (b *TokenBucketService) addTokensToBucket(key string) {
 		tokensToAdd := bucket.Capacity - bucket.AvailableTokens
 		bucket.AvailableTokens += min(bucket.TokenAddRate, tokensToAdd)
 
-		if err := redis.SetJSONObject(key, bucket); err != nil {
+		if err := redisClient.SetJSONObject(key, bucket); err != nil {
 			log.Error().Err(err).Msg("Error saving updated bucket to Redis")
 		}
 	}
