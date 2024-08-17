@@ -8,11 +8,12 @@ import (
 )
 
 var (
-	Client *redis.Client
-	ctx    = context.Background()
+	TokenBucketClient *redis.Client
+	RuleClient        *redis.Client
+	ctx               = context.Background()
 )
 
-func Connect() {
+func Connect() error {
 	c := redis.NewClient(
 		&redis.Options{
 			Addr:     "localhost:6379",
@@ -21,18 +22,38 @@ func Connect() {
 		},
 	)
 
-	Client = c
+	TokenBucketClient = c
 
-	cmd := Client.Ping(context.TODO())
-	if cmd.Err() != nil {
-		log.Error().Msgf("unable to connect to redis: " + cmd.Err().Error())
+	bucketCmd := TokenBucketClient.Ping(ctx)
+	if bucketCmd.Err() != nil {
+		log.Error().Msgf("unable to connect to redis (token bucket db): " + bucketCmd.Err().Error())
+		return bucketCmd.Err()
 	} else {
-		log.Info().Msg("Connected to redis successfully")
+		log.Info().Msg("Connected to redis successfully (token bucket db)")
 	}
+
+	ruleDB := redis.NewClient(
+		&redis.Options{
+			Addr:     "localhost:6379",
+			Password: "",
+			DB:       1,
+		},
+	)
+
+	RuleClient = ruleDB
+
+	ruleCmd := RuleClient.Ping(ctx)
+	if ruleCmd.Err() != nil {
+		log.Error().Msgf("unable to connect to redis (rules db): " + bucketCmd.Err().Error())
+		return ruleCmd.Err()
+	} else {
+		log.Info().Msg("Connected to redis successfully (rules db)")
+	}
+	return nil
 }
 
 func SetJSONObject(key string, val interface{}) error {
-	err := Client.JSONSet(ctx, key, ".", val).Err()
+	err := TokenBucketClient.JSONSet(ctx, key, ".", val).Err()
 	if err != nil {
 		return err
 	}
@@ -40,7 +61,7 @@ func SetJSONObject(key string, val interface{}) error {
 }
 
 func GetJSONObject(key string) ([]byte, error) {
-	res, err := Client.JSONGet(ctx, key, ".").Result()
+	res, err := TokenBucketClient.JSONGet(ctx, key, ".").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +69,18 @@ func GetJSONObject(key string) ([]byte, error) {
 }
 
 func Get(key string) ([]byte, bool, error) {
-	res, err := Client.Get(ctx, key).Result()
+	res, err := TokenBucketClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+
+	return []byte(res), true, nil
+}
+
+func GetRule(key string) ([]byte, bool, error) {
+	res, err := RuleClient.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return nil, false, nil
 	} else if err != nil {

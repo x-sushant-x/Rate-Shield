@@ -19,7 +19,11 @@ func init() {
 
 func main() {
 	config.LoadConfig()
-	redis.Connect()
+
+	err := redis.Connect()
+	if err != nil {
+		log.Fatal().Err(err).Msg(err.Error())
+	}
 
 	endpoints.StartTestingRouter()
 
