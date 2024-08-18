@@ -19,7 +19,7 @@ func StartSvc() {
 	StartAddTokenJob()
 }
 
-func (l *Limiter) CheckLimit(ip, endpoint string) bool {
+func (l *Limiter) CheckLimit(ip, endpoint string) int {
 	return l.TokenBucket.ProcessRequest(ip, endpoint)
 }
 

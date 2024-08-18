@@ -3,6 +3,7 @@ package limiter
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -69,22 +70,26 @@ func (b *TokenBucketService) AddTokens() {
 	}
 }
 
-func (b *TokenBucketService) ProcessRequest(ip, endpoint string) bool {
+func (b *TokenBucketService) ProcessRequest(ip, endpoint string) int {
 	key := ip + ":" + endpoint
 
 	bucket, err := b.GetBucket(key)
 	if err != nil {
 		log.Error().Msgf("error while getting bucket %s" + err.Error())
-		return false
+		return http.StatusInternalServerError
 	}
 
 	if !b.checkAvailiblity(bucket) {
-		return false
+		return http.StatusTooManyRequests
 	}
 
 	bucket.AvailableTokens--
 
-	return b.saveBucket(key, bucket) == nil
+	if err := b.saveBucket(key, bucket); err != nil {
+		return http.StatusInternalServerError
+	}
+
+	return http.StatusOK
 }
 
 func (b *TokenBucketService) checkAvailiblity(bucket models.Bucket) bool {

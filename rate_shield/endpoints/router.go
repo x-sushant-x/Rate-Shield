@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/x-sushant-x/RateShield/limiter"
 )
 
 func StartTestingRouter() {
@@ -27,10 +26,42 @@ func getReq(c *fiber.Ctx) error {
 }
 
 func checkRateLimit(c *fiber.Ctx) error {
-	if valid := limiter.RateLimiter.CheckLimit(c.IP(), c.Path()); !valid {
-		return c.Status(http.StatusTooManyRequests).JSON(map[string]string{
-			"error": "Too many requests",
-		})
+	apiEndpoint := "http://127.0.0.1:8080/rate-limiter/check"
+	req, err := http.NewRequest("GET", apiEndpoint, nil)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	req.Header.Add("ip", c.IP())
+	req.Header.Add("endpoint", c.Path())
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	code := resp.StatusCode
+
+	switch code {
+	case 200:
+		return c.Next()
+	case 429:
+		return sendTooManyReq(c)
+	case 500:
+		return sendInternalServerError(c)
+	}
+
 	return c.Next()
+}
+
+func sendTooManyReq(c *fiber.Ctx) error {
+	return c.Status(http.StatusTooManyRequests).JSON(map[string]string{
+		"error": "Too many requests",
+	})
+}
+
+func sendInternalServerError(c *fiber.Ctx) error {
+	return c.Status(http.StatusInternalServerError).JSON(map[string]string{
+		"error": "Internal server error",
+	})
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/x-sushant-x/RateShield/api"
 	"github.com/x-sushant-x/RateShield/config"
 	"github.com/x-sushant-x/RateShield/endpoints"
 	"github.com/x-sushant-x/RateShield/limiter"
@@ -26,6 +27,7 @@ func main() {
 	}
 
 	endpoints.StartTestingRouter()
+	api.StartServer()
 
 	limiter.StartSvc()
 
