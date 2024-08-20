@@ -1,8 +1,6 @@
 package service
 
 import (
-	"encoding/json"
-
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
@@ -37,14 +35,7 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 			continue
 		}
 
-		var r models.Rule
-		err = json.Unmarshal(rule, &r)
-		if err != nil {
-			log.Err(err).Msgf("unable to marshal rule with key: %s", key)
-			continue
-		}
-
-		rules = append(rules, r)
+		rules = append(rules, rule)
 	}
 
 	return rules, nil

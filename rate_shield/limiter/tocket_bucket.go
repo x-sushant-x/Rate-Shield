@@ -40,7 +40,7 @@ func (b *TokenBucketService) spawnNewBucket(key string) (models.Bucket, error) {
 		return b.createBucket(ip, endpoint, config.Config.TokenBucketCapacity, config.Config.TokenAddingRate), nil
 	}
 
-	return b.createBucketFromRule(ip, endpoint, string(rule)), nil
+	return b.createBucketFromRule(ip, endpoint, rule), nil
 }
 
 func (b *TokenBucketService) GetBucket(key string) (models.Bucket, error) {
@@ -123,9 +123,8 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 	return bucket
 }
 
-func (t *TokenBucketService) createBucketFromRule(ip, endpoint, rule string) models.Bucket {
-	capacity, tokenAddRate := parseRule(rule)
-	return t.createBucket(ip, endpoint, capacity, tokenAddRate)
+func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule models.Rule) models.Bucket {
+	return t.createBucket(ip, endpoint, int(rule.BucketCapacity), int(rule.TokenAddRate))
 }
 
 func (t *TokenBucketService) saveBucket(key string, bucket models.Bucket) error {

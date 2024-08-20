@@ -2,9 +2,11 @@ package redisClient
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
+	"github.com/x-sushant-x/RateShield/models"
 )
 
 var (
@@ -79,15 +81,21 @@ func Get(key string) ([]byte, bool, error) {
 	return []byte(res), true, nil
 }
 
-func GetRule(key string) ([]byte, bool, error) {
+func GetRule(key string) (models.Rule, bool, error) {
 	res, err := RuleClient.Get(ctx, key).Result()
 	if err == redis.Nil {
-		return nil, false, nil
+		return models.Rule{}, false, nil
 	} else if err != nil {
-		return nil, false, err
+		return models.Rule{}, false, err
 	}
 
-	return []byte(res), true, nil
+	var rule models.Rule
+	err = json.Unmarshal([]byte(res), &rule)
+	if err != nil {
+		return models.Rule{}, false, nil
+	}
+
+	return rule, true, nil
 }
 
 func GetAllRuleKeys() ([]string, bool, error) {
