@@ -89,3 +89,12 @@ func GetRule(key string) ([]byte, bool, error) {
 
 	return []byte(res), true, nil
 }
+
+func GetAllRuleKeys() ([]string, bool, error) {
+	res, err := RuleClient.Keys(ctx, "*").Result()
+	if err != redis.Nil {
+		return nil, false, nil
+	}
+
+	return res, true, nil
+}

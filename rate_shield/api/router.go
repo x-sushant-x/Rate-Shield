@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
+	"github.com/x-sushant-x/RateShield/service"
 )
 
 func StartServer() {
@@ -11,6 +12,13 @@ func StartServer() {
 	rateLimitHandler := RateLimitHandler{}
 
 	app.Get("/rate-limiter/check", rateLimitHandler.CheckRateLimit)
+
+	rulesGroup := app.Group("/rules")
+	{
+		svc := service.RulesServiceRedis{}
+		h := NewRulesAPIHandler(svc)
+		rulesGroup.Get("/all", h.ListAllRules)
+	}
 
 	go func() {
 		err := app.Listen(":8080")
