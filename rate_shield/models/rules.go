@@ -6,3 +6,7 @@ type Rule struct {
 	BucketCapacity int64  `json:"bucket_capacity"`
 	TokenAddRate   int64  `json:"token_add_rate"`
 }
+
+type DeleteRuleDTO struct {
+	RuleKey string `json:"rule_key"`
+}

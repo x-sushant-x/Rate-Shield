@@ -98,3 +98,19 @@ func GetAllRuleKeys() ([]string, bool, error) {
 
 	return res, true, nil
 }
+
+func SetRule(key string, val interface{}) error {
+	err := RuleClient.JSONSet(ctx, key, ".", val).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteRule(key string) error {
+	err := RuleClient.Del(ctx, key).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}

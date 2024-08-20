@@ -10,7 +10,7 @@ import (
 
 type RulesService interface {
 	GetAllRules() ([]models.Rule, error)
-	UpdateRule(endpoint string) error
+	CreateOrUpdateRule(models.Rule) error
 	DeleteRule(endpoint string) error
 }
 
@@ -50,5 +50,18 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 	return rules, nil
 }
 
-func (s RulesServiceRedis) UpdateRule(endpoint string) error { return nil }
-func (s RulesServiceRedis) DeleteRule(endpoint string) error { return nil }
+func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
+	err := redisClient.SetRule(rule.APIEndpoint, rule)
+	if err != nil {
+		log.Err(err).Msg("unable to create or update rule")
+	}
+	return nil
+}
+
+func (s RulesServiceRedis) DeleteRule(endpoint string) error {
+	err := redisClient.DeleteRule(endpoint)
+	if err != nil {
+		log.Err(err).Msg("unable to create or update rule")
+	}
+	return err
+}
