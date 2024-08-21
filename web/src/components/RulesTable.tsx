@@ -1,25 +1,25 @@
-import { Rule } from '../api/rules'
 import modifyRule from '../assets/modify_rule.png'
-
-
-const jsonData = `[
-  {
-    "endpoint": "/api/v1/get-user",
-    "method": "GET",
-    "strategy": "Token Bucket",
-    "modifyRules": true
-  },
-  {
-    "endpoint": "/api/v1/generate-otp",
-    "method": "POST",
-    "strategy": "Sliding Window",
-    "modifyRules": true
-  }
-]
-`
-const data: Rule[] = JSON.parse(jsonData)
+import { getAllRules, rule } from '../api/rules';
+import { useEffect, useState } from 'react';
 
 export default function RulesTable() {
+    const [data, setData] = useState<rule[]>();
+
+    const fetchRules = async () => {
+        try {
+            const rules = await getAllRules();
+            setData(rules);
+        } catch (error) {
+            console.error("Failed to fetch rules:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchRules()
+    }, [])
+
+
+
     return (
         <div className="px-8 py-8">
             <table className="table-auto w-full text-left">
@@ -32,12 +32,12 @@ export default function RulesTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    {data.map((item, index) => (
+                    {data === undefined ? "No Rules Created" : data.map((item, index) => (
                         <>
                             <tr key={index}>
                                 <td style={{ width: "50%" }} className='pt-6'>{item.endpoint}</td>
-                                <td className="text-center pt-6" style={{ width: "15%" }}>{item.method}</td>  {/* Center aligned */}
-                                <td className="text-center pt-6" style={{ width: "15%" }}>{item.strategy}</td>  {/* Center aligned */}
+                                <td className="text-center pt-6" style={{ width: "15%" }}>{item.http_method}</td>  {/* Center aligned */}
+                                <td className="text-center pt-6" style={{ width: "15%" }}>{item.type}</td>  {/* Center aligned */}
                                 <td className="text-center pt-6" style={{ width: "20%" }}>
                                     <center>
                                         <img src={modifyRule} />
