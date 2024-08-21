@@ -62,12 +62,15 @@ func SetJSONObject(key string, val interface{}) error {
 	return nil
 }
 
-func GetJSONObject(key string) ([]byte, error) {
+func GetJSONObject(key string) ([]byte, bool, error) {
 	res, err := TokenBucketClient.JSONGet(ctx, key, ".").Result()
-	if err != nil {
-		return nil, err
+	if err == redis.Nil {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
 	}
-	return []byte(res), nil
+
+	return []byte(res), true, nil
 }
 
 func Get(key string) ([]byte, bool, error) {
@@ -82,7 +85,7 @@ func Get(key string) ([]byte, bool, error) {
 }
 
 func GetRule(key string) (models.Rule, bool, error) {
-	res, err := RuleClient.Get(ctx, key).Result()
+	res, err := RuleClient.JSONGet(ctx, key).Result()
 	if err == redis.Nil {
 		return models.Rule{}, false, nil
 	} else if err != nil {
@@ -101,6 +104,8 @@ func GetRule(key string) (models.Rule, bool, error) {
 func GetAllRuleKeys() ([]string, bool, error) {
 	res, err := RuleClient.Keys(ctx, "*").Result()
 	if err != redis.Nil {
+		return nil, false, nil
+	} else if err != nil {
 		return nil, false, nil
 	}
 

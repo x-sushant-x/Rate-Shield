@@ -18,6 +18,9 @@ func StartServer() {
 		svc := service.RulesServiceRedis{}
 		h := NewRulesAPIHandler(svc)
 		rulesGroup.Get("/all", h.ListAllRules)
+
+		rulesGroup.Post("/add", h.CreateOrUpdateRule)
+		rulesGroup.Delete("/delete", h.DeleteRule)
 	}
 
 	go func() {

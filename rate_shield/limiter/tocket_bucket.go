@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -44,13 +43,13 @@ func (b *TokenBucketService) spawnNewBucket(key string) (models.Bucket, error) {
 }
 
 func (b *TokenBucketService) GetBucket(key string) (models.Bucket, error) {
-	data, err := redisClient.GetJSONObject(key)
+	data, found, err := redisClient.GetJSONObject(key)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching bucket from Redis")
-		return models.Bucket{}, err
+
 	}
 
-	if len(data) == 0 {
+	if len(data) == 0 || !found {
 		return b.spawnNewBucket(key)
 	}
 
@@ -99,13 +98,6 @@ func (b *TokenBucketService) checkAvailiblity(bucket models.Bucket) bool {
 func parseKey(key string) (string, string) {
 	parts := strings.Split(key, ":")
 	return parts[0], parts[1]
-}
-
-func parseRule(rule string) (int, int) {
-	parts := strings.Split(rule, ":")
-	capacity, _ := strconv.Atoi(parts[0])
-	tokenAddRate, _ := strconv.Atoi(parts[1])
-	return capacity, tokenAddRate
 }
 
 func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int) models.Bucket {

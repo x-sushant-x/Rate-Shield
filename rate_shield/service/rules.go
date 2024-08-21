@@ -20,6 +20,8 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 		log.Err(err).Msg("unable to get all rule keys from redis")
 	}
 
+	log.Info().Msgf("Total Keys: %d", len(keys))
+
 	rules := []models.Rule{}
 
 	for _, key := range keys {
@@ -45,6 +47,7 @@ func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
 	err := redisClient.SetRule(rule.APIEndpoint, rule)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
+		return err
 	}
 	return nil
 }
@@ -53,6 +56,8 @@ func (s RulesServiceRedis) DeleteRule(endpoint string) error {
 	err := redisClient.DeleteRule(endpoint)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
+		return err
+
 	}
 	return err
 }

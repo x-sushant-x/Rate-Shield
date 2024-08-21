@@ -24,12 +24,12 @@ func (h RulesAPIHandler) ListAllRules(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(map[string]interface{}{
-		"status": "sucess",
+		"status": "success",
 		"data":   rules,
 	})
 }
 
-func (h RulesAPIHandler) UpdateRule(c *fiber.Ctx) error {
+func (h RulesAPIHandler) CreateOrUpdateRule(c *fiber.Ctx) error {
 	var updateReq models.Rule
 	if err := c.BodyParser(&updateReq); err != nil {
 		return utils.SendBadRequestError(c)
@@ -41,7 +41,7 @@ func (h RulesAPIHandler) UpdateRule(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(map[string]interface{}{
-		"status": "sucess",
+		"status": "success",
 		"data":   "Rule Created Successfully",
 	})
 }
@@ -59,7 +59,7 @@ func (h RulesAPIHandler) DeleteRule(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(map[string]interface{}{
-		"status": "sucess",
+		"status": "success",
 		"data":   "Rule Deleted Successfully",
 	})
 }
