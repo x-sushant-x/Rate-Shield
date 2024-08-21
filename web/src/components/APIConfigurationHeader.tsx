@@ -1,7 +1,11 @@
 import { faSearch } from "@fortawesome/free-solid-svg-icons/faSearch";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-export default function APIConfigurationHeader() {
+interface Props {
+    openAddNewRuleDialog: () => void
+}
+
+const APIConfigurationHeader: React.FC<Props> = ({ openAddNewRuleDialog }) => {
     return (
         <div className="px-8 py-8 flex justify-between">
             <p className="text-[1.375rem] font-poppins font-medium text-slate-900">APIs Configurations</p>
@@ -16,7 +20,9 @@ export default function APIConfigurationHeader() {
                         placeholder="Search"
                     />
                 </div>
-                <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center">
+                <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center" onClick={() => {
+                    openAddNewRuleDialog()
+                }}>
                     <span className="mr-2">+</span>
                     Add New
                 </button>
@@ -24,3 +30,5 @@ export default function APIConfigurationHeader() {
         </div>
     )
 }
+
+export default APIConfigurationHeader
