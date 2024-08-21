@@ -20,8 +20,6 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 		log.Err(err).Msg("unable to get all rule keys from redis")
 	}
 
-	log.Info().Msgf("Total Keys: %d", len(keys))
-
 	rules := []models.Rule{}
 
 	for _, key := range keys {
