@@ -39,10 +39,10 @@ const RulesTable: React.FC<Props> = ({ openAddOrUpdateRuleDialog }) => {
             <table className="table-auto w-full text-left">
                 <thead>
                     <tr>
-                        <th className="text-left" style={{ width: "50%" }}>Endpoint</th>  {/* Left aligned */}
-                        <th className="text-center" style={{ width: "15%" }}>Method</th>  {/* Center aligned */}
-                        <th className="text-center" style={{ width: "15%" }}>Strategy</th>  {/* Center aligned */}
-                        <th className="text-center" style={{ width: "20%" }}>Modify Rules</th>  {/* Center aligned */}
+                        <th className="text-left" style={{ width: "63%" }}>Endpoint</th>  {/* Left aligned */}
+                        <th className="text-center" style={{ width: "5%" }}>Method</th>  {/* Center aligned */}
+                        <th className="text-center" style={{ width: "10%" }}>Strategy</th>  {/* Center aligned */}
+                        <th className="text-center" style={{ width: "15%" }}>Modify</th>  {/* Center aligned */}
                     </tr>
                 </thead>
                 <tbody>
