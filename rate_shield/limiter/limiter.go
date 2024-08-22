@@ -29,7 +29,7 @@ func StartAddTokenJob() {
 		panic(err)
 	}
 
-	_, err = s.NewJob(gocron.DurationJob(time.Second*10), gocron.NewTask(func() {
+	_, err = s.NewJob(gocron.DurationJob(time.Second*60), gocron.NewTask(func() {
 		RateLimiter.TokenBucket.AddTokens()
 	}))
 
