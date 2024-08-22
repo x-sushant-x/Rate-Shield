@@ -31,7 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectPage }) => {
                 <div className='flex items-center ml-7 mt-4 cursor-pointer'
                     onClick={() => onSelectPage('TWITTER')}>
                     <img src={twitterIcon} />
-                    <li className="ml-4 hover:bg-gray-700 text-sm">Tweet on X</li>
+                    <li className="ml-4 hover:bg-gray-700 text-sm">Follow on X</li>
                 </div>
 
                 <div className='flex items-center ml-7 mt-4 cursor-pointer'
