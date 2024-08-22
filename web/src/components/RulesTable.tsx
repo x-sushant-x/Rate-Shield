@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import { customToastStyle } from '../utils/toast_styles';
 
-export default function RulesTable() {
+interface Props {
+    openAddOrUpdateRuleDialog: (rule: rule | null) => void
+}
+
+const RulesTable: React.FC<Props> = ({ openAddOrUpdateRuleDialog }) => {
     const [data, setData] = useState<rule[]>();
     const errorShown = useRef(false)
 
@@ -50,7 +54,9 @@ export default function RulesTable() {
                                 <td className="text-center pt-6" style={{ width: "15%" }}>{item.strategy}</td>  {/* Center aligned */}
                                 <td className="text-center pt-6" style={{ width: "20%" }}>
                                     <center>
-                                        <img src={modifyRule} />
+                                        <img src={modifyRule} className='cursor-pointer' onClick={() => {
+                                            openAddOrUpdateRuleDialog(item)
+                                        }} />
                                     </center>
                                 </td>
                             </tr>
@@ -68,3 +74,5 @@ export default function RulesTable() {
         </div>
     )
 }
+
+export default RulesTable

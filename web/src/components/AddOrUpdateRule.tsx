@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import BackArrow from '../assets/BackArrow.png'
@@ -7,28 +7,33 @@ import { customToastStyle } from '../utils/toast_styles';
 
 interface Props {
     closeAddNewRule: () => void
+    action: string
+    endpoint?: string
+    httpMethod?: string
+    bucketCapacity?: number
+    tokenAddRate?: number
 }
 
 
 
-const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
+const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapacity, endpoint, httpMethod, tokenAddRate }) => {
     const [apiEndpoint, setApiEndpoint] = useState('');
     const [strategy,] = useState('TOKEN BUCKET');
-    const [httpMethod, setHttpMethod] = useState('GET');
-    const [bucketCapacity, setBucketCapacity] = useState('');
-    const [tokenAddRate, setTokenAddRate] = useState('');
+    const [method, setHttpMethod] = useState('GET');
+    const [capacity, setBucketCapacity] = useState('');
+    const [addRate, setTokenAddRate] = useState('');
 
 
     async function addRule() {
         const newRule: rule = {
-            bucket_capacity: Number.parseInt(bucketCapacity),
+            bucket_capacity: Number.parseInt(capacity),
             endpoint: apiEndpoint,
-            http_method: httpMethod,
-            token_add_rate: Number.parseInt(tokenAddRate),
+            http_method: method,
+            token_add_rate: Number.parseInt(addRate),
             strategy: strategy
         }
 
-        if (bucketCapacity === "" || apiEndpoint === "" || httpMethod === "" || tokenAddRate === "" || strategy === "") {
+        if (capacity === "" || apiEndpoint === "" || httpMethod === "" || addRate === "" || strategy === "") {
             toast.error("Please ensure entered data is valid.", {
                 style: customToastStyle
             })
@@ -43,6 +48,15 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
         }
     }
 
+    useEffect(() => {
+        if (action === "UPDATE") {
+            setApiEndpoint(endpoint || '');
+            setHttpMethod(httpMethod || 'GET');
+            setBucketCapacity(bucketCapacity ? bucketCapacity.toString() : '');
+            setTokenAddRate(tokenAddRate ? tokenAddRate.toString() : '');
+        }
+    }, [action, endpoint, httpMethod, bucketCapacity, tokenAddRate])
+
     return (
         <div className="px-8">
             <div className='flex items-center mb-12'>
@@ -51,7 +65,7 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
                         closeAddNewRule()
                     }
                 } />
-                <p className="text-xl ml-4">Add Rule</p>
+                <p className="text-xl ml-4">{action === "ADD" ? "Add Rule" : "Update Rule"}</p>
             </div>
 
             <p className='mb-2'>API Endpoint</p>
@@ -104,7 +118,9 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
             <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {
                 addRule()
             }}>
-                Add Rule
+                {
+                    action === "ADD" ? "Add" : "Update"
+                }
             </button>
 
             <Toaster position="bottom-right" reverseOrder={false} />
@@ -113,4 +129,4 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
 }
 
 
-export default AddNewRule
+export default AddOrUpdateRule
