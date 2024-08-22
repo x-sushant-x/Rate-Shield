@@ -3,6 +3,7 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import BackArrow from '../assets/BackArrow.png'
 import { createNewRule, rule } from '../api/rules';
+import { customToastStyle } from '../utils/toast_styles';
 
 interface Props {
     closeAddNewRule: () => void
@@ -24,7 +25,7 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
             endpoint: apiEndpoint,
             http_method: httpMethod,
             token_add_rate: Number.parseInt(tokenAddRate),
-            type: strategy
+            strategy: strategy
         }
 
         if (bucketCapacity === "" || apiEndpoint === "" || httpMethod === "" || tokenAddRate === "" || strategy === "") {
@@ -111,13 +112,5 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
     )
 }
 
-
-const customToastStyle = {
-    background: "#333",
-    color: "#fff",
-    padding: "10px 20px",
-    borderRadius: "8px",
-    fontSize: "14px",
-};
 
 export default AddNewRule

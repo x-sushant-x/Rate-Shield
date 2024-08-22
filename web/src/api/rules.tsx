@@ -1,7 +1,7 @@
 const baseUrl = "http://127.0.0.1:8080/"
 
 export interface rule {
-    type: string;
+    strategy: string;
     endpoint: string;
     http_method: string;
     bucket_capacity: number;

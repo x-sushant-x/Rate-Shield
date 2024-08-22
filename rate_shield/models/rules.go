@@ -1,7 +1,7 @@
 package models
 
 type Rule struct {
-	Strategy       string `json:"Strategy"`
+	Strategy       string `json:"strategy"`
 	APIEndpoint    string `json:"endpoint"`
 	BucketCapacity int64  `json:"bucket_capacity"`
 	TokenAddRate   int64  `json:"token_add_rate"`

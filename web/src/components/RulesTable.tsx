@@ -1,16 +1,26 @@
 import modifyRule from '../assets/modify_rule.png'
 import { getAllRules, rule } from '../api/rules';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import { customToastStyle } from '../utils/toast_styles';
 
 export default function RulesTable() {
     const [data, setData] = useState<rule[]>();
+    const errorShown = useRef(false)
 
     const fetchRules = async () => {
         try {
             const rules = await getAllRules();
             setData(rules);
+            errorShown.current = false
         } catch (error) {
             console.error("Failed to fetch rules:", error);
+            if (errorShown.current === false) {
+                toast.error("Error: " + error, {
+                    style: customToastStyle
+                })
+                errorShown.current = true
+            }
         }
     };
 
@@ -32,12 +42,12 @@ export default function RulesTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    {data === undefined ? "No Rules Created" : data.map((item, index) => (
+                    {data === undefined ? <div></div> : data.map((item, index) => (
                         <>
                             <tr key={index}>
                                 <td style={{ width: "50%" }} className='pt-6'>{item.endpoint}</td>
                                 <td className="text-center pt-6" style={{ width: "15%" }}>{item.http_method}</td>  {/* Center aligned */}
-                                <td className="text-center pt-6" style={{ width: "15%" }}>{item.type}</td>  {/* Center aligned */}
+                                <td className="text-center pt-6" style={{ width: "15%" }}>{item.strategy}</td>  {/* Center aligned */}
                                 <td className="text-center pt-6" style={{ width: "20%" }}>
                                     <center>
                                         <img src={modifyRule} />
@@ -54,6 +64,7 @@ export default function RulesTable() {
                     ))}
                 </tbody>
             </table>
+            <Toaster position="bottom-right" reverseOrder={false} />
         </div>
     )
 }
