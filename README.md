@@ -4,7 +4,8 @@ A completely configurable rate limiter that can apply rate limiting on individua
 
 #### 📊 Dashboard
 
-<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/screenshot.png"></img>
+<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/main.png"></img>
+<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/Edit%20Rule.png"></img>
 
 
 #### 🎯 Why?
