@@ -92,7 +92,7 @@ const AddNewRule: React.FC<Props> = ({ closeAddNewRule }) => {
                 onChange={(e) => setBucketCapacity(e.target.value)}
             />
 
-            <p className='mb-2 mt-6'>Token Add Rate (per second)</p>
+            <p className='mb-2 mt-6'>Token Add Rate (per minute)</p>
             <input
                 className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
                 placeholder="Ex: - 100"
