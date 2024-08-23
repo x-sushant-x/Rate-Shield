@@ -20,7 +20,7 @@ var (
 )
 
 const (
-	BucketExpireTime    = time.Second * 30
+	BucketExpireTime    = time.Second * 60
 	DefaultTokenAddTime = 0
 )
 
