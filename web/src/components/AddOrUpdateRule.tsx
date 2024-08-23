@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import BackArrow from '../assets/BackArrow.png'
@@ -17,23 +17,23 @@ interface Props {
 
 
 const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapacity, endpoint, httpMethod, tokenAddRate }) => {
-    const [apiEndpoint, setApiEndpoint] = useState('');
+    const [apiEndpoint, setApiEndpoint] = useState(endpoint || '');
     const [strategy,] = useState('TOKEN BUCKET');
     const [method, setHttpMethod] = useState('GET');
-    const [capacity, setBucketCapacity] = useState('');
-    const [addRate, setTokenAddRate] = useState('');
+    const [capacity, setBucketCapacity] = useState(bucketCapacity || 0);
+    const [addRate, setTokenAddRate] = useState(tokenAddRate || 0);
 
 
     async function addRule() {
         const newRule: rule = {
-            bucket_capacity: Number.parseInt(capacity),
+            bucket_capacity: capacity,
             endpoint: apiEndpoint,
             http_method: method,
-            token_add_rate: Number.parseInt(addRate),
+            token_add_rate: addRate,
             strategy: strategy
         }
 
-        if (capacity === "" || apiEndpoint === "" || httpMethod === "" || addRate === "" || strategy === "") {
+        if (capacity === 0 || apiEndpoint === "" || httpMethod === "" || addRate === 0 || strategy === "") {
             toast.error("Please ensure entered data is valid.", {
                 style: customToastStyle
             })
@@ -48,14 +48,14 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapac
         }
     }
 
-    useEffect(() => {
-        if (action === "UPDATE") {
-            setApiEndpoint(endpoint || '');
-            setHttpMethod(httpMethod || 'GET');
-            setBucketCapacity(bucketCapacity ? bucketCapacity.toString() : '');
-            setTokenAddRate(tokenAddRate ? tokenAddRate.toString() : '');
-        }
-    }, [action, endpoint, httpMethod, bucketCapacity, tokenAddRate])
+    // useEffect(() => {
+    //     if (action === "UPDATE") {
+    //         setApiEndpoint(endpoint || '');
+    //         setHttpMethod(httpMethod || 'GET');
+    //         setBucketCapacity(bucketCapacity ? bucketCapacity.toString() : '');
+    //         setTokenAddRate(tokenAddRate ? tokenAddRate.toString() : '');
+    //     }
+    // }, [action, endpoint, httpMethod, bucketCapacity, tokenAddRate])
 
     return (
         <div className="px-8">
@@ -74,7 +74,9 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapac
                 required
                 placeholder="Ex: - /api/v1/create"
                 value={apiEndpoint}
-                onChange={(e) => setApiEndpoint(e.target.value)}
+                onChange={(e) => {
+                    setApiEndpoint(e.target.value)
+                }}
             />
 
             <br></br>
@@ -88,8 +90,10 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapac
             <p className='mb-2 mt-6'>HTTP Method</p>
             <select
                 className="bg-slate-200 px-4 py-2 rounded-md focus:outline-none w-auto appearance-none"
-                value={httpMethod}
-                onChange={(e) => setHttpMethod(e.target.value)}>
+                value={method}
+                onChange={(e) => {
+                    setHttpMethod(e.target.value)
+                }}>
 
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
@@ -103,16 +107,19 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapac
             <input
                 className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
                 placeholder="Ex: - 10000"
-                value={bucketCapacity}
-                onChange={(e) => setBucketCapacity(e.target.value)}
+                value={capacity}
+                onChange={(e) => setBucketCapacity(Number.parseInt(e.target.value) || 0)}
             />
 
             <p className='mb-2 mt-6'>Token Add Rate (per minute)</p>
             <input
                 className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
                 placeholder="Ex: - 100"
-                value={tokenAddRate}
-                onChange={(e) => setTokenAddRate(e.target.value)}
+                value={addRate}
+                onChange={(e) => {
+                    console.log('New Value: ', e.target.value)
+                    setTokenAddRate(Number.parseInt(e.target.value) || 0)
+                }}
             />
 
             <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {

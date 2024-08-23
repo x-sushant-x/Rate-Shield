@@ -3,10 +3,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { rule } from "../api/rules";
 
 interface Props {
-    openAddNewRuleDialog: (rule: rule | null) => void
+    openAddOrUpdateRuleDialog: (rule: rule | null) => void
 }
 
-const APIConfigurationHeader: React.FC<Props> = ({ openAddNewRuleDialog }) => {
+const APIConfigurationHeader: React.FC<Props> = ({ openAddOrUpdateRuleDialog }) => {
     return (
         <div className="px-8 py-8 flex justify-between">
             <p className="text-[1.375rem] font-poppins font-medium text-slate-900">APIs Configurations</p>
@@ -22,7 +22,7 @@ const APIConfigurationHeader: React.FC<Props> = ({ openAddNewRuleDialog }) => {
                     />
                 </div>
                 <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center" onClick={() => {
-                    openAddNewRuleDialog(null)
+                    openAddOrUpdateRuleDialog(null)
                 }}>
                     <span className="mr-2">+</span>
                     Add New

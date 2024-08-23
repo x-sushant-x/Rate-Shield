@@ -1,14 +1,14 @@
 import { useState } from "react";
 import APIConfigurationHeader from "../components/APIConfigurationHeader";
 import RulesTable from "../components/RulesTable";
-import AddNewRule from "../components/AddOrUpdateRule";
+import AddOrUpdateRule from "../components/AddOrUpdateRule";
 import { rule } from "../api/rules";
 
 export default function APIConfiguration() {
     const [isAddNewRuleDialogOpen, setIsAddRuleDialogOpen] = useState(false)
     const [selectedRule, setSelectedRule] = useState<rule | null>(null)
 
-    const openAddNewRuleDialog = (rule: rule | null) => {
+    const openAddOrUpdateRuleDialog = (rule: rule | null) => {
         setSelectedRule(rule)
         setIsAddRuleDialogOpen(true)
     }
@@ -20,11 +20,11 @@ export default function APIConfiguration() {
 
     return (
         <div className="h-screen bg-white rounded-xl shadow-lg">
-            <APIConfigurationHeader openAddNewRuleDialog={openAddNewRuleDialog} />
+            <APIConfigurationHeader openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} />
 
             {
                 isAddNewRuleDialogOpen ?
-                    <AddNewRule
+                    <AddOrUpdateRule
                         closeAddNewRule={closeAddNewRuleDialog}
                         action={selectedRule ? "UPDATE" : "ADD"}
                         endpoint={selectedRule?.endpoint}
@@ -33,7 +33,7 @@ export default function APIConfiguration() {
                         tokenAddRate={selectedRule?.token_add_rate}
                     />
                     :
-                    <RulesTable openAddOrUpdateRuleDialog={openAddNewRuleDialog} />
+                    <RulesTable openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} />
             }
         </div>
     )
