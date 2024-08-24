@@ -2,45 +2,91 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"net"
+	"net/http"
+	"runtime"
+	"sync"
 	"time"
+)
 
-	vegeta "github.com/tsenart/vegeta/v12/lib"
+var (
+	totalRequests  = 500000
+	maxConcurrency = 100
+
+	successResponse         = 0
+	tooManyRequestsResponse = 0
 )
 
 func main() {
-	rate := vegeta.Rate{
-		Freq: 1000,
-		Per:  time.Second,
+	var IPs []net.IP
+
+	for i := 0; i < 1000; i++ {
+		IPs = append(IPs, generateRandomIP())
 	}
 
-	duration := time.Second * 60
-	attacker := vegeta.NewAttacker()
+	startTime := time.Now()
 
-	ipGenerator := func(i int) string {
-		return fmt.Sprintf("192.168.1.%d", i%100+1) // Generates IPs like 192.168.1.1 to 192.168.1.10000
+	var wg sync.WaitGroup
+
+	semaphore := make(chan struct{}, maxConcurrency)
+
+	var initalMem runtime.MemStats
+	runtime.ReadMemStats(&initalMem)
+
+	for i := 0; i < totalRequests; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			ip := pickRandomIP(IPs)
+
+			req, err := http.NewRequest("GET", "http://127.0.0.1:8080/check-limit", nil)
+			if err != nil {
+				return
+			}
+
+			req.Header.Add("ip", ip.String())
+			req.Header.Add("endpoint", "/api/v1/get-data")
+
+			res, _ := http.DefaultClient.Do(req)
+			if res.StatusCode == 200 {
+				successResponse++
+			} else if res.StatusCode == 429 {
+				tooManyRequestsResponse++
+			}
+		}()
 	}
 
-	var metrics vegeta.Metrics
-	for i := 0; i < 100; i++ {
-		targeter := vegeta.NewStaticTargeter(vegeta.Target{
-			Method: "GET",
-			URL:    "http://127.0.0.1/check-limit",
-			Header: map[string][]string{
-				"ip":       {ipGenerator(i)},
-				"endpoint": {"/api/v1/get-data"},
-			},
-		})
+	wg.Wait()
 
-		for res := range attacker.Attack(targeter, rate, duration, "Rate Limiter Test") {
-			metrics.Add(res)
-		}
-		metrics.Close()
-	}
+	var finalMem runtime.MemStats
+	runtime.ReadMemStats(&finalMem)
 
-	fmt.Printf("Requests: %d\n", metrics.Requests)
-	fmt.Printf("Rate: %f\n", metrics.Rate)
-	fmt.Printf("Duration: %s\n", metrics.Duration)
-	fmt.Printf("Success: %f\n", metrics.Success)
-	fmt.Printf("Latencies: %s\n", metrics.Latencies)
+	memUsed := finalMem.Alloc - initalMem.Alloc
 
+	fmt.Printf("Memory Used: %dMB \n", memUsed/(1024*1024))
+
+	duration := time.Since(startTime)
+	fmt.Println("Time Taken: ", duration)
+
+	requestsPerSecond := float64(totalRequests) / duration.Seconds()
+	fmt.Printf("Requests per second: %.2f\n", requestsPerSecond)
+
+	fmt.Printf("Total Requests: %d\n", totalRequests)
+	fmt.Printf("Total Success Response: %d\n", successResponse)
+	fmt.Printf("Total Too Many Requests Response: %d\n", tooManyRequestsResponse)
+}
+
+func generateRandomIP() net.IP {
+	ip := net.IPv4(byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)), byte(rand.Intn(256)))
+	return ip
+}
+
+func pickRandomIP(IPs []net.IP) net.IP {
+	idx := rand.Intn(len(IPs))
+	return IPs[idx]
 }

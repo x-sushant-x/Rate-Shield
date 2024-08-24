@@ -61,7 +61,6 @@ func (b *TokenBucketService) GetBucket(key string) (models.Bucket, error) {
 }
 
 func (b *TokenBucketService) AddTokens() {
-	log.Info().Msg("Adding tokens")
 	ctx := context.TODO()
 	keys, err := redisClient.TokenBucketClient.Keys(ctx, "*").Result()
 	if err != nil {
