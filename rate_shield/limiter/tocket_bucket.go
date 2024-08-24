@@ -26,6 +26,10 @@ const (
 
 type TokenBucketService struct{}
 
+func NewTokenBucketService() TokenBucketService {
+	return TokenBucketService{}
+}
+
 func (b *TokenBucketService) spawnNewBucket(key string) (models.Bucket, error) {
 	ip, endpoint := parseKey(key)
 

@@ -31,7 +31,9 @@ func main() {
 	server := api.NewServer(8080)
 	log.Fatal().Err(server.StartServer())
 
-	limiter.StartSvc()
+	tokenBucketSvc := limiter.NewTokenBucketService()
+	limiter := limiter.NewRateLimiterService(tokenBucketSvc)
+	limiter.StartRateLimiter()
 
 	select {}
 }

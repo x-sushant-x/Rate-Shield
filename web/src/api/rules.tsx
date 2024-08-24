@@ -15,7 +15,7 @@ interface getAllRuleResponse {
 
 
 export async function getAllRules(): Promise<rule[]> {
-    const url = `${baseUrl}rules/all`;
+    const url = `${baseUrl}rule/list`;
 
     try {
         const response = await fetch(url, {
@@ -38,7 +38,7 @@ export async function getAllRules(): Promise<rule[]> {
 
 
 export async function createNewRule(rule: rule) {
-    const url = `${baseUrl}rules/add`;
+    const url = `${baseUrl}rule/add`;
 
     try {
         const response = await fetch(url, {

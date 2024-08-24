@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/rs/zerolog/log"
+	"github.com/x-sushant-x/RateShield/limiter"
 	"github.com/x-sushant-x/RateShield/service"
 )
 
@@ -19,36 +20,10 @@ func NewServer(port int) Server {
 }
 
 func (s Server) StartServer() error {
-	// app := fiber.New()
-	// app.Use(cors.New(cors.Config{
-	// 	AllowOrigins: "*",
-	// 	AllowHeaders: "Origin, Content-Type, Accept",
-	// }))
-
-	// rateLimitHandler := RateLimitHandler{}
-
-	// app.Get("/rate-limiter/check", rateLimitHandler.CheckRateLimit)
-
-	// rulesGroup := app.Group("/rules")
-	// {
-	// 	svc := service.RulesServiceRedis{}
-	// 	h := NewRulesAPIHandler(svc)
-	// 	rulesGroup.Get("/all", h.ListAllRules)
-
-	// 	rulesGroup.Post("/add", h.CreateOrUpdateRule)
-	// 	rulesGroup.Delete("/delete", h.DeleteRule)
-	// }
-
-	// go func() {
-	// 	err := app.Listen(":8080")
-	// 	if err != nil {
-	// 		log.Err(err).Msg("unable to start server")
-	// 	}
-	// }()
-
 	mux := http.NewServeMux()
 
 	s.registerRulesRoutes(mux)
+	s.registerRateLimiterRoutes(mux)
 
 	corsMux := s.setupCORS(mux)
 
@@ -82,4 +57,12 @@ func (s Server) registerRulesRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/rule/list", rulesHandler.ListAllRules)
 	mux.HandleFunc("/rule/add", rulesHandler.CreateOrUpdateRule)
 	mux.HandleFunc("/rule/delete", rulesHandler.DeleteRule)
+}
+
+func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
+	tokenBucketSvc := limiter.NewTokenBucketService()
+	limiter := limiter.NewRateLimiterService(tokenBucketSvc)
+	rateLimiterHandler := NewRateLimitHandler(limiter)
+
+	mux.HandleFunc("/check-limit", rateLimiterHandler.CheckRateLimit)
 }

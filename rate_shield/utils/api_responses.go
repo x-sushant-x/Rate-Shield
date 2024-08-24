@@ -33,7 +33,7 @@ func SuccessResponse(data interface{}, w http.ResponseWriter) {
 		"data":   data,
 	}
 
-	w.WriteHeader(http.StatusInternalServerError)
+	w.WriteHeader(http.StatusOK)
 	bytes, _ := json.Marshal(msg)
 	w.Write(bytes)
 }

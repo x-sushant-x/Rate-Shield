@@ -6,31 +6,32 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
-var (
-	RateLimiter *Limiter
-)
-
 type Limiter struct {
-	TokenBucket TokenBucketService
+	tokenBucket TokenBucketService
 }
 
-func StartSvc() {
-	RateLimiter = &Limiter{}
-	StartAddTokenJob()
+func NewRateLimiterService(tokenBucket TokenBucketService) Limiter {
+	return Limiter{
+		tokenBucket: tokenBucket,
+	}
 }
 
-func (l *Limiter) CheckLimit(ip, endpoint string) int {
-	return l.TokenBucket.ProcessRequest(ip, endpoint)
+func (l Limiter) CheckLimit(ip, endpoint string) int {
+	return l.tokenBucket.ProcessRequest(ip, endpoint)
 }
 
-func StartAddTokenJob() {
+func (l Limiter) StartRateLimiter() {
+	l.startAddTokenJob()
+}
+
+func (l Limiter) startAddTokenJob() {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		panic(err)
 	}
 
 	_, err = s.NewJob(gocron.DurationJob(time.Second*60), gocron.NewTask(func() {
-		RateLimiter.TokenBucket.AddTokens()
+		l.tokenBucket.AddTokens()
 	}))
 
 	if err != nil {

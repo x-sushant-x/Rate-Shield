@@ -1,24 +1,33 @@
 package api
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"net/http"
+
 	"github.com/x-sushant-x/RateShield/limiter"
 )
 
-type RateLimitHandler struct{}
+type RateLimitHandler struct {
+	limiterSvc limiter.Limiter
+}
 
-func (h RateLimitHandler) CheckRateLimit(c *fiber.Ctx) error {
-	ip := c.Get("ip")
-	endpoint := c.Get("endpoint")
+func NewRateLimitHandler(limiterSvc limiter.Limiter) RateLimitHandler {
+	return RateLimitHandler{
+		limiterSvc: limiterSvc,
+	}
+}
 
-	code := limiter.RateLimiter.CheckLimit(ip, endpoint)
+func (h RateLimitHandler) CheckRateLimit(w http.ResponseWriter, r *http.Request) {
+	ip := r.Header.Get("ip")
+	endpoint := r.Header.Get("endpoint")
+
+	code := h.limiterSvc.CheckLimit(ip, endpoint)
 
 	switch code {
 	case 200:
-		return c.SendStatus(200)
+		w.WriteHeader(http.StatusOK)
 	case 429:
-		return c.SendStatus(429)
+		w.WriteHeader(http.StatusTooManyRequests)
 	default:
-		return c.SendStatus(500)
+		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
