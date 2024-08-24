@@ -27,6 +27,17 @@ func BadRequestError(w http.ResponseWriter) {
 	w.Write(bytes)
 }
 
+func MethodNotAllowedError(w http.ResponseWriter) {
+	msg := map[string]string{
+		"status": "fail",
+		"error":  "Method Not Allowed",
+	}
+
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	bytes, _ := json.Marshal(msg)
+	w.Write(bytes)
+}
+
 func SuccessResponse(data interface{}, w http.ResponseWriter) {
 	msg := map[string]interface{}{
 		"status": "success",

@@ -58,3 +58,27 @@ export async function createNewRule(rule: rule) {
         throw error
     }
 }
+
+export async function deleteRule(ruleKey: string) {
+    const url = `${baseUrl}rule/delete`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "rule_key": ruleKey
+            })
+        })
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText);
+        }
+    } catch (error) {
+        console.error("Failed to delete rule: ", error)
+        throw error
+    }
+}

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import BackArrow from '../assets/BackArrow.png'
-import { createNewRule, rule } from '../api/rules';
+import { createNewRule, rule, deleteRule } from '../api/rules';
 import { customToastStyle } from '../utils/toast_styles';
 
 interface Props {
@@ -48,14 +48,14 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapac
         }
     }
 
-    // useEffect(() => {
-    //     if (action === "UPDATE") {
-    //         setApiEndpoint(endpoint || '');
-    //         setHttpMethod(httpMethod || 'GET');
-    //         setBucketCapacity(bucketCapacity ? bucketCapacity.toString() : '');
-    //         setTokenAddRate(tokenAddRate ? tokenAddRate.toString() : '');
-    //     }
-    // }, [action, endpoint, httpMethod, bucketCapacity, tokenAddRate])
+    async function deleteExistingRule() {
+        try {
+            await deleteRule(apiEndpoint)
+            closeAddNewRule()
+        } catch (error) {
+            toast.error("Unable to add rule: " + error)
+        }
+    }
 
     return (
         <div className="px-8">
@@ -122,13 +122,24 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, bucketCapac
                 }}
             />
 
-            <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {
-                addRule()
-            }}>
+            <div className='flex'>
+                <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {
+                    addRule()
+                }}>
+                    {
+                        action === "ADD" ? "Add" : "Update"
+                    }
+                </button>
+
                 {
-                    action === "ADD" ? "Add" : "Update"
+                    action === "UPDATE" ?
+                        <button className="bg-[#bb2124] text-slate-200 py-2 px-4 rounded-md flex items-center mt-8 ml-4" onClick={() => {
+                            deleteExistingRule()
+                        }}>
+                            Delete
+                        </button> : <div></div>
                 }
-            </button>
+            </div>
 
             <Toaster position="bottom-right" reverseOrder={false} />
         </div>
