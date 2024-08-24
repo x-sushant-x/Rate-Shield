@@ -8,7 +8,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/api"
 	"github.com/x-sushant-x/RateShield/config"
-	"github.com/x-sushant-x/RateShield/endpoints"
 	"github.com/x-sushant-x/RateShield/limiter"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
@@ -26,14 +25,12 @@ func main() {
 		log.Fatal().Err(err).Msg(err.Error())
 	}
 
-	endpoints.StartTestingRouter()
-
-	server := api.NewServer(8080)
-	log.Fatal().Err(server.StartServer())
-
 	tokenBucketSvc := limiter.NewTokenBucketService()
 	limiter := limiter.NewRateLimiterService(tokenBucketSvc)
 	limiter.StartRateLimiter()
+
+	server := api.NewServer(8080)
+	log.Fatal().Err(server.StartServer())
 
 	select {}
 }

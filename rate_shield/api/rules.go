@@ -3,7 +3,6 @@ package api
 import (
 	"net/http"
 
-	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	"github.com/x-sushant-x/RateShield/service"
 	"github.com/x-sushant-x/RateShield/utils"
@@ -33,9 +32,6 @@ func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Reque
 		if err != nil {
 			utils.BadRequestError(w)
 		}
-
-		log.Info().Msgf("Request Body: %v", updateReq)
-
 		err = h.rulesSvc.CreateOrUpdateRule(updateReq)
 		if err != nil {
 			utils.InternalError(w)

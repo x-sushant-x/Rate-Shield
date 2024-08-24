@@ -6,6 +6,10 @@ import (
 	"github.com/go-co-op/gocron/v2"
 )
 
+const (
+	TokenAddTime = time.Minute * 1
+)
+
 type Limiter struct {
 	tokenBucket TokenBucketService
 }
@@ -30,7 +34,7 @@ func (l Limiter) startAddTokenJob() {
 		panic(err)
 	}
 
-	_, err = s.NewJob(gocron.DurationJob(time.Second*60), gocron.NewTask(func() {
+	_, err = s.NewJob(gocron.DurationJob(TokenAddTime), gocron.NewTask(func() {
 		l.tokenBucket.AddTokens()
 	}))
 
