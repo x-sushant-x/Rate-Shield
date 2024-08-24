@@ -27,7 +27,9 @@ func main() {
 	}
 
 	endpoints.StartTestingRouter()
-	api.StartServer()
+
+	server := api.NewServer(8080)
+	log.Fatal().Err(server.StartServer())
 
 	limiter.StartSvc()
 

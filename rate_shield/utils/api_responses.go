@@ -1,17 +1,39 @@
 package utils
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"encoding/json"
+	"net/http"
+)
 
-func SendInternalError(c *fiber.Ctx) error {
-	return c.Status(500).JSON(map[string]string{
+func InternalError(w http.ResponseWriter) {
+	msg := map[string]string{
 		"status": "fail",
 		"error":  "Internal Server Error",
-	})
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	bytes, _ := json.Marshal(msg)
+	w.Write(bytes)
 }
 
-func SendBadRequestError(c *fiber.Ctx) error {
-	return c.Status(500).JSON(map[string]string{
+func BadRequestError(w http.ResponseWriter) {
+	msg := map[string]string{
 		"status": "fail",
 		"error":  "Invalid Request Body",
-	})
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	bytes, _ := json.Marshal(msg)
+	w.Write(bytes)
+}
+
+func SuccessResponse(data interface{}, w http.ResponseWriter) {
+	msg := map[string]interface{}{
+		"status": "success",
+		"data":   data,
+	}
+
+	w.WriteHeader(http.StatusInternalServerError)
+	bytes, _ := json.Marshal(msg)
+	w.Write(bytes)
 }

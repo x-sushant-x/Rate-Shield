@@ -1,7 +1,8 @@
 package api
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"net/http"
+
 	"github.com/x-sushant-x/RateShield/models"
 	"github.com/x-sushant-x/RateShield/service"
 	"github.com/x-sushant-x/RateShield/utils"
@@ -17,49 +18,38 @@ func NewRulesAPIHandler(svc service.RulesService) RulesAPIHandler {
 	}
 }
 
-func (h RulesAPIHandler) ListAllRules(c *fiber.Ctx) error {
+func (h RulesAPIHandler) ListAllRules(w http.ResponseWriter, r *http.Request) {
 	rules, err := h.rulesSvc.GetAllRules()
 	if err != nil {
-		return utils.SendInternalError(c)
+		utils.InternalError(w)
 	}
-
-	return c.Status(200).JSON(map[string]interface{}{
-		"status": "success",
-		"data":   rules,
-	})
+	utils.SuccessResponse(rules, w)
 }
 
-func (h RulesAPIHandler) CreateOrUpdateRule(c *fiber.Ctx) error {
-	var updateReq models.Rule
-	if err := c.BodyParser(&updateReq); err != nil {
-		return utils.SendBadRequestError(c)
-	}
-
-	err := h.rulesSvc.CreateOrUpdateRule(updateReq)
+func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Request) {
+	updateReq, err := utils.ParseAPIBody[models.Rule](r)
 	if err != nil {
-		return utils.SendInternalError(c)
+		utils.BadRequestError(w)
 	}
 
-	return c.Status(200).JSON(map[string]interface{}{
-		"status": "success",
-		"data":   "Rule Created Successfully",
-	})
+	err = h.rulesSvc.CreateOrUpdateRule(updateReq)
+	if err != nil {
+		utils.InternalError(w)
+	}
+
+	utils.SuccessResponse("Rule Created Successfully", w)
 }
 
-func (h RulesAPIHandler) DeleteRule(c *fiber.Ctx) error {
-	var deleteReq models.DeleteRuleDTO
-
-	if err := c.BodyParser(&deleteReq); err != nil {
-		return utils.SendBadRequestError(c)
-	}
-
-	err := h.rulesSvc.DeleteRule(deleteReq.RuleKey)
+func (h RulesAPIHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
+	deleteReq, err := utils.ParseAPIBody[models.DeleteRuleDTO](r)
 	if err != nil {
-		return utils.SendInternalError(c)
+		utils.BadRequestError(w)
 	}
 
-	return c.Status(200).JSON(map[string]interface{}{
-		"status": "success",
-		"data":   "Rule Deleted Successfully",
-	})
+	err = h.rulesSvc.DeleteRule(deleteReq.RuleKey)
+	if err != nil {
+		utils.InternalError(w)
+	}
+
+	utils.SuccessResponse("Rule Deleted Successfully", w)
 }
