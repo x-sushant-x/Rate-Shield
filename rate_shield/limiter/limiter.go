@@ -21,7 +21,7 @@ func NewRateLimiterService(tokenBucket TokenBucketService) Limiter {
 }
 
 func (l Limiter) CheckLimit(ip, endpoint string) int {
-	return l.tokenBucket.ProcessRequest(ip, endpoint)
+	return l.tokenBucket.processRequest(ip, endpoint)
 }
 
 func (l Limiter) StartRateLimiter() {
@@ -35,7 +35,7 @@ func (l Limiter) startAddTokenJob() {
 	}
 
 	_, err = s.NewJob(gocron.DurationJob(TokenAddTime), gocron.NewTask(func() {
-		l.tokenBucket.AddTokens()
+		l.tokenBucket.addTokens()
 	}))
 
 	if err != nil {
