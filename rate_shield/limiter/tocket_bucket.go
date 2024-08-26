@@ -3,6 +3,7 @@ package limiter
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -24,29 +25,29 @@ const (
 	DefaultTokenAddTime = 0
 )
 
-type TokenBucketService struct{}
+type TokenBucketService models.Bucket
 
 func NewTokenBucketService() TokenBucketService {
 	return TokenBucketService{}
 }
 
-func (b *TokenBucketService) spawnNewBucket(key string) (models.Bucket, error) {
+func (b *TokenBucketService) spawnNewBucket(key string) (TokenBucketService, error) {
 	ip, endpoint := parseKey(key)
 
 	rule, found, err := redisClient.GetRule(endpoint)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching rule from Redis")
-		return models.Bucket{}, err
+		return TokenBucketService{}, err
 	}
 
 	if !found {
-		return b.createBucket(ip, endpoint, config.Config.TokenBucketCapacity, config.Config.TokenAddingRate), nil
+		return createBucket(ip, endpoint, config.Config.TokenBucketCapacity, config.Config.TokenAddingRate), nil
 	}
 
 	return b.createBucketFromRule(ip, endpoint, rule), nil
 }
 
-func (b *TokenBucketService) GetBucket(key string) (models.Bucket, error) {
+func (b *TokenBucketService) GetBucket(key string) (TokenBucketService, error) {
 	data, found, err := redisClient.GetJSONObject(key)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching bucket from Redis")
@@ -88,14 +89,14 @@ func (b *TokenBucketService) ProcessRequest(ip, endpoint string) int {
 
 	bucket.AvailableTokens--
 
-	if err := b.saveBucket(key, bucket); err != nil {
+	if err := b.saveBucket(); err != nil {
 		return http.StatusInternalServerError
 	}
 
 	return http.StatusOK
 }
 
-func (b *TokenBucketService) checkAvailiblity(bucket models.Bucket) bool {
+func (b *TokenBucketService) checkAvailiblity(bucket TokenBucketService) bool {
 	return bucket.AvailableTokens > 0
 }
 
@@ -104,8 +105,8 @@ func parseKey(key string) (string, string) {
 	return parts[0], parts[1]
 }
 
-func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int) models.Bucket {
-	bucket := models.Bucket{
+func createBucket(ip, endpoint string, capacity, tokenAddRate int) TokenBucketService {
+	b := TokenBucketService{
 		ClientIP:        ip,
 		CreatedAt:       time.Now().Unix(),
 		Capacity:        capacity,
@@ -115,16 +116,21 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 		TokenAddTime:    DefaultTokenAddTime,
 	}
 
-	t.saveBucket(ip, bucket)
-	return bucket
+	b.saveBucket()
+	return b
 }
 
-func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule models.Rule) models.Bucket {
-	return t.createBucket(ip, endpoint, int(rule.BucketCapacity), int(rule.TokenAddRate))
+func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule models.Rule) TokenBucketService {
+	return createBucket(ip, endpoint, int(rule.BucketCapacity), int(rule.TokenAddRate))
 }
 
-func (t *TokenBucketService) saveBucket(key string, bucket models.Bucket) error {
-	if err := redisClient.SetJSONObject(key, bucket); err != nil {
+func (t *TokenBucketService) saveBucket() error {
+	key := t.ClientIP + ":" + t.Endpoint
+	if key == ":" {
+		log.Error().Msg("Bucket key is empty")
+		fmt.Println(t)
+	}
+	if err := redisClient.SetJSONObject(key, t); err != nil {
 		log.Error().Err(err).Msg("Error saving new bucket to Redis")
 		return err
 	}
@@ -137,11 +143,11 @@ func (t *TokenBucketService) saveBucket(key string, bucket models.Bucket) error 
 	return nil
 }
 
-func (t *TokenBucketService) unmarshalBucket(data []byte) (models.Bucket, error) {
-	var bucket models.Bucket
+func (t *TokenBucketService) unmarshalBucket(data []byte) (TokenBucketService, error) {
+	var bucket TokenBucketService
 	if err := json.Unmarshal(data, &bucket); err != nil {
 		log.Error().Err(err).Msg("Error unmarshalling bucket data")
-		return models.Bucket{}, err
+		return TokenBucketService{}, err
 	}
 	return bucket, nil
 }
