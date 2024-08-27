@@ -13,15 +13,9 @@ import (
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
 
-var (
-	TokenBucketManager    *TokenBucketService
-	DefaultTokenAddRate   = config.Config.TokenAddingRate
-	DefaultBucketCapacity = config.Config.TokenBucketCapacity
-)
-
 const (
 	BucketExpireTime    = time.Second * 60
-	DefaultTokenAddTime = 0
+	DefaultTokenAddTime = 60
 )
 
 type TokenBucketService models.Bucket
