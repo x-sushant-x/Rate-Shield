@@ -12,16 +12,18 @@ const (
 
 type Limiter struct {
 	tokenBucket TokenBucketService
+	fixedWindow *FixedWindowService
 }
 
-func NewRateLimiterService(tokenBucket TokenBucketService) Limiter {
+func NewRateLimiterService(tokenBucket TokenBucketService, fixedWindow *FixedWindowService) Limiter {
 	return Limiter{
 		tokenBucket: tokenBucket,
+		fixedWindow: fixedWindow,
 	}
 }
 
 func (l Limiter) CheckLimit(ip, endpoint string) int {
-	return l.tokenBucket.processRequest(ip, endpoint)
+	return l.fixedWindow.processRequest(ip, endpoint)
 }
 
 func (l Limiter) StartRateLimiter() {

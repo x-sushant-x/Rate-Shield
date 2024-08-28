@@ -26,7 +26,9 @@ func main() {
 	}
 
 	tokenBucketSvc := limiter.NewTokenBucketService()
-	limiter := limiter.NewRateLimiterService(tokenBucketSvc)
+	fixedWindowSvc := limiter.NewFixedWindowService(5, time.Second*30)
+
+	limiter := limiter.NewRateLimiterService(tokenBucketSvc, &fixedWindowSvc)
 	limiter.StartRateLimiter()
 
 	server := api.NewServer(8080)
