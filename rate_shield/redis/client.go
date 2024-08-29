@@ -10,47 +10,40 @@ import (
 )
 
 var (
-	TokenBucketClient *redis.Client
-	RuleClient        *redis.Client
-	ctx               = context.Background()
+	TokenBucketClient          *redis.Client
+	RuleClient                 *redis.Client
+	SlidingWindowCounterClient *redis.Client
+	ctx                        = context.Background()
 )
 
+func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
+	conn := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "",
+		DB:       db,
+	})
+
+	pingCmd := conn.Ping(ctx)
+	if pingCmd.Err() != nil {
+		log.Error().Msgf("unable to connect to redis on addr (%s): %s", addr, pingCmd.Err().Error())
+		return nil, pingCmd.Err()
+	}
+	return conn, nil
+}
+
 func Connect() error {
-	c := redis.NewClient(
-		&redis.Options{
-			Addr:     "localhost:6379",
-			Password: "",
-			DB:       0,
-		},
-	)
+	tokenBucketClient, err := createNewRedisConnection("localhost:6379", 0)
+	checkError(err)
+	TokenBucketClient = tokenBucketClient
 
-	TokenBucketClient = c
+	ruleClient, err := createNewRedisConnection("localhost:6379", 1)
+	checkError(err)
+	RuleClient = ruleClient
 
-	bucketCmd := TokenBucketClient.Ping(ctx)
-	if bucketCmd.Err() != nil {
-		log.Error().Msgf("unable to connect to redis (token bucket db): " + bucketCmd.Err().Error())
-		return bucketCmd.Err()
-	} else {
-		log.Info().Msg("Connected to redis successfully (token bucket db)")
-	}
+	slidingWindowClient, err := createNewRedisConnection("localhost:6379", 2)
+	checkError(err)
+	SlidingWindowCounterClient = slidingWindowClient
 
-	ruleDB := redis.NewClient(
-		&redis.Options{
-			Addr:     "localhost:6379",
-			Password: "",
-			DB:       1,
-		},
-	)
-
-	RuleClient = ruleDB
-
-	ruleCmd := RuleClient.Ping(ctx)
-	if ruleCmd.Err() != nil {
-		log.Error().Msgf("unable to connect to redis (rules db): " + bucketCmd.Err().Error())
-		return ruleCmd.Err()
-	} else {
-		log.Info().Msg("Connected to redis successfully (rules db)")
-	}
 	return nil
 }
 
@@ -120,6 +113,13 @@ func SetRule(key string, val interface{}) error {
 
 func DeleteRule(key string) error {
 	err := RuleClient.Del(ctx, key).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func checkError(err error) error {
 	if err != nil {
 		return err
 	}
