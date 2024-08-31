@@ -32,13 +32,13 @@ func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
 }
 
 func Connect() error {
-	tokenBucketClient, err := createNewRedisConnection("localhost:6379", 0)
-	checkError(err)
-	TokenBucketClient = tokenBucketClient
-
-	ruleClient, err := createNewRedisConnection("localhost:6379", 1)
+	ruleClient, err := createNewRedisConnection("localhost:6379", 0)
 	checkError(err)
 	RuleClient = ruleClient
+
+	tokenBucketClient, err := createNewRedisConnection("localhost:6379", 1)
+	checkError(err)
+	TokenBucketClient = tokenBucketClient
 
 	fixedWindowClient, err := createNewRedisConnection("localhost:6379", 2)
 	checkError(err)
