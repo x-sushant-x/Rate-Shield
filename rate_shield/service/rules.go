@@ -35,7 +35,7 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 			continue
 		}
 
-		rules = append(rules, rule)
+		rules = append(rules, *rule)
 	}
 
 	return rules, nil

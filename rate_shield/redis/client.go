@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	TokenBucketClient          *redis.Client
-	RuleClient                 *redis.Client
-	SlidingWindowCounterClient *redis.Client
-	ctx                        = context.Background()
+	TokenBucketClient        *redis.Client
+	RuleClient               *redis.Client
+	FixedWindowCounterClient *redis.Client
+	ctx                      = context.Background()
 )
 
 func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
@@ -40,14 +40,15 @@ func Connect() error {
 	checkError(err)
 	RuleClient = ruleClient
 
-	slidingWindowClient, err := createNewRedisConnection("localhost:6379", 2)
+	fixedWindowClient, err := createNewRedisConnection("localhost:6379", 2)
 	checkError(err)
-	SlidingWindowCounterClient = slidingWindowClient
+	FixedWindowCounterClient = fixedWindowClient
 
+	log.Info().Msg("Connected To Redis")
 	return nil
 }
 
-func SetJSONObject(key string, val interface{}) error {
+func SetTokenBucketJSONObject(key string, val interface{}) error {
 	err := TokenBucketClient.JSONSet(ctx, key, ".", val).Err()
 	if err != nil {
 		return err
@@ -55,9 +56,9 @@ func SetJSONObject(key string, val interface{}) error {
 	return nil
 }
 
-func GetJSONObject(key string) ([]byte, bool, error) {
+func GetTokenBucketJSONObject(key string) ([]byte, bool, error) {
 	res, err := TokenBucketClient.JSONGet(ctx, key, ".").Result()
-	if err == redis.Nil {
+	if err == redis.Nil || len(res) == 0 {
 		return nil, false, nil
 	} else if err != nil {
 		return nil, false, err
@@ -77,21 +78,21 @@ func Get(key string) ([]byte, bool, error) {
 	return []byte(res), true, nil
 }
 
-func GetRule(key string) (models.Rule, bool, error) {
+func GetRule(key string) (*models.Rule, bool, error) {
 	res, err := RuleClient.JSONGet(ctx, key).Result()
 	if err == redis.Nil {
-		return models.Rule{}, false, nil
+		return nil, false, nil
 	} else if err != nil {
-		return models.Rule{}, false, err
+		return nil, false, err
 	}
 
 	var rule models.Rule
 	err = json.Unmarshal([]byte(res), &rule)
 	if err != nil {
-		return models.Rule{}, false, nil
+		return nil, false, nil
 	}
 
-	return rule, true, nil
+	return &rule, true, nil
 }
 
 func GetAllRuleKeys() ([]string, bool, error) {

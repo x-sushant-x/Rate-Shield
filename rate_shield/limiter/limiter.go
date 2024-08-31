@@ -1,9 +1,13 @@
 package limiter
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
+	"github.com/rs/zerolog/log"
+	"github.com/x-sushant-x/RateShield/models"
+	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
 
 const (
@@ -22,15 +26,37 @@ func NewRateLimiterService(tokenBucket TokenBucketService, fixedWindow *FixedWin
 	}
 }
 
-func (l Limiter) CheckLimit(ip, endpoint string) int {
-	return l.fixedWindow.processRequest(ip, endpoint)
+func (l *Limiter) CheckLimit(ip, endpoint string) int {
+	key := ip + ":" + endpoint
+	rule, found, err := l.GetRule(endpoint)
+
+	if err == nil && found {
+		switch rule.Strategy {
+		case "TOKEN BUCKET":
+			return l.tokenBucket.processRequest(key, *rule)
+		case "FIXED WINDOW COUNTER":
+			return l.fixedWindow.processRequest(ip, endpoint)
+		}
+	}
+
+	if err != nil {
+		log.Err(err).Msg("unable to check limit")
+		// Notify on slack
+		return http.StatusOK
+	}
+
+	return http.StatusOK
 }
 
-func (l Limiter) StartRateLimiter() {
+func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
+	return redisClient.GetRule(key)
+}
+
+func (l *Limiter) StartRateLimiter() {
 	l.startAddTokenJob()
 }
 
-func (l Limiter) startAddTokenJob() {
+func (l *Limiter) startAddTokenJob() {
 	s, err := gocron.NewScheduler()
 	if err != nil {
 		panic(err)
