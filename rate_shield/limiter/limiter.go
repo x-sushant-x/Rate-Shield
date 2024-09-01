@@ -35,7 +35,7 @@ func (l *Limiter) CheckLimit(ip, endpoint string) int {
 		case "TOKEN BUCKET":
 			return l.tokenBucket.processRequest(key, *rule)
 		case "FIXED WINDOW COUNTER":
-			return l.fixedWindow.processRequest(ip, endpoint)
+			return l.fixedWindow.processRequest(ip, endpoint, *rule)
 		}
 	}
 

@@ -3,7 +3,6 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/limiter"
@@ -67,7 +66,7 @@ func (s Server) registerRulesRoutes(mux *http.ServeMux) {
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
 	tokenBucketSvc := limiter.NewTokenBucketService()
-	fixedWindowSvc := limiter.NewFixedWindowService(5, time.Second*30)
+	fixedWindowSvc := limiter.NewFixedWindowService()
 
 	limiter := limiter.NewRateLimiterService(tokenBucketSvc, &fixedWindowSvc)
 	rateLimiterHandler := NewRateLimitHandler(limiter)

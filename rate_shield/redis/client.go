@@ -3,6 +3,7 @@ package redisClient
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -125,4 +126,28 @@ func checkError(err error) error {
 		return err
 	}
 	return nil
+}
+
+func SetFixedWindowJSONObject(key string, val interface{}) error {
+	err := FixedWindowCounterClient.JSONSet(ctx, key, ".", val).Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func GetFixedWindowJSONObject(key string) ([]byte, bool, error) {
+	res, err := FixedWindowCounterClient.JSONGet(ctx, key, ".").Result()
+	if err == redis.Nil || len(res) == 0 {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+
+	return []byte(res), true, nil
+}
+
+func SetFixedWindowExpireTime(key string, expireTime time.Duration) error {
+	_, err := FixedWindowCounterClient.Expire(ctx, key, expireTime).Result()
+	return err
 }

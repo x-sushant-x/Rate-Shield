@@ -91,7 +91,6 @@ func getBucket(key string) (*TokenBucketService, bool, error) {
 	}
 
 	if !found {
-		log.Error().Err(err).Msg("Error bucket not found in redis")
 		return nil, false, nil
 	}
 
