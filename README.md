@@ -1,32 +1,68 @@
-## 🚀 RateShield
+## 🚀 **RateShield**
 
-A completely configurable rate limiter that can apply rate limiting on individual APIs with individual rules.
+A fully customizable rate limiter designed to apply rate limiting on individual APIs with specific rules.
 
-#### 📊 Dashboard
 
-<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/main.png"></img>
-<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/Edit%20Rule.png"></img>
 
-#### 🎯 Why?
+#### 📊 **Dashboard Overview**
 
-Why not? I've got some free time, so I decided to build something.
+![RateShield Dashboard](https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/main.png)
 
-#### 🌟 Features
 
-1. 🛠 Customizable Limiting
-2. 🖥️ Dashboard
-3. ⚙️ Plug-and-Play Middleware:
+![RateShield Edit Rule](https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/Edit%20Rule.png)
 
-#### ⚙️ Use Cases
+___
 
-1. Preventing Abuse: Limit the number of requests an API can handle to prevent abuse or malicious activities.
-2. Cost Management: Avoid overages on third-party API calls.
+#### 🎯 **Why RateShield?**
 
-#### ⚠️ Important
+Why not? With some free time on hand, RateShield was created to explore the potential of building a versatile rate-limiting solution. What started as a side project is evolving into a powerful tool for developers.
 
-- Current Limitation: Only supports Token Bucket Rate Limiting, which may not suit all scenarios.
-- Under Development: This is a hobby project and still in progress. Not recommended for production use—yet! Stay tuned for v1.0.
+---
 
-#### 🤝 Contribution
+#### 🌟 **Key Features**
 
-If you want to contribute check [this](https://github.com/x-sushant-x/Rate-Shield/blob/main/CONTRIBUTION.md) document.
+- **Customizable Limiting:** <br>
+   Tailor rate limiting rules to each API endpoint according to your needs.
+   
+- **Intuitive Dashboard:** <br>
+   A user-friendly interface to monitor and manage all your rate limits effectively.
+   
+- **Easy Integration:** <br>
+   Plug-and-play middleware that seamlessly integrates into your existing infrastructure.
+
+---
+
+#### ⚙️ **Use Cases**
+
+- **Preventing Abuse:**  
+  Control the number of requests your APIs can handle to prevent misuse and malicious activities.
+  
+- **Cost Management:**  
+  Manage third-party API calls efficiently to avoid unexpected overages.
+
+---
+
+#### 🚀 **Supported Rate Limiting Algorithms**
+
+- **Token Bucket**
+- **Fixed Window Counter**
+- **More algorithms are on the way!**
+
+---
+
+#### ⚠️ **Important Information**
+
+- **Current Limitation:**  
+  At present, RateShield only supports the Token Bucket algorithm, which may not fit all use cases.
+  
+- **Under Development:**  
+  RateShield is still in progress and should not be used in production environments just yet. Stay tuned for the official v1.0 release!
+
+
+---
+
+#### 🤝 **Contributing**
+
+Interested in contributing? We'd love your help! Check out our [Contribution Guidelines](https://github.com/x-sushant-x/Rate-Shield/blob/main/CONTRIBUTION.md) to get started.
+
+---
