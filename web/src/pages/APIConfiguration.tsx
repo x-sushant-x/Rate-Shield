@@ -26,11 +26,12 @@ export default function APIConfiguration() {
                 isAddNewRuleDialogOpen ?
                     <AddOrUpdateRule
                         closeAddNewRule={closeAddNewRuleDialog}
+                        strategy={selectedRule?.strategy ?? 'UNDEFINED'}
                         action={selectedRule ? "UPDATE" : "ADD"}
                         endpoint={selectedRule?.endpoint}
                         httpMethod={selectedRule?.http_method}
-                        bucketCapacity={selectedRule?.bucket_capacity}
-                        tokenAddRate={selectedRule?.token_add_rate}
+                        fixed_window_counter_rule={selectedRule?.fixed_window_counter_rule || null}
+                        token_bucket_rule={selectedRule?.token_bucket_rule || null}
                     />
                     :
                     <RulesTable openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} />

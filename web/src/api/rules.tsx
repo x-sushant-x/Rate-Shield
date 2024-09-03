@@ -4,8 +4,18 @@ export interface rule {
     strategy: string;
     endpoint: string;
     http_method: string;
-    bucket_capacity: number;
-    token_add_rate: number;
+    fixed_window_counter_rule: fixedWindowCounterRule | null
+    token_bucket_rule: tokenBucketRule | null
+}
+
+export interface fixedWindowCounterRule {
+    max_requests: number
+    window: number
+}
+
+export interface tokenBucketRule {
+    bucket_capacity: number
+    token_add_rate: number
 }
 
 interface getAllRuleResponse {
