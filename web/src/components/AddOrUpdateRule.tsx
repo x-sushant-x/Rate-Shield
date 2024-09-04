@@ -2,8 +2,8 @@ import { useState } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import BackArrow from '../assets/BackArrow.png'
-import { deleteRule, fixedWindowCounterRule, tokenBucketRule } from '../api/rules';
-// import { customToastStyle } from '../utils/toast_styles';
+import { createNewRule, deleteRule, fixedWindowCounterRule, rule, tokenBucketRule } from '../api/rules';
+import { customToastStyle } from '../utils/toast_styles';
 
 interface Props {
     closeAddNewRule: () => void
@@ -20,10 +20,29 @@ interface Props {
 const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, endpoint, httpMethod, token_bucket_rule, fixed_window_counter_rule }) => {
     const [apiEndpoint, setApiEndpoint] = useState(endpoint || '');
     const [limitStrategy, setLimitStrategy] = useState(strategy);
-    const [method, setHttpMethod] = useState(httpMethod);
+    const [method, setHttpMethod] = useState(httpMethod || '');
     const [tokenBucket, setTokenBucketRule] = useState(token_bucket_rule)
     const [fixedWindowCounter, setFixedWindowCounterRule] = useState(fixed_window_counter_rule)
 
+
+    const addOrUpdateRule = async () => {
+        const newRule : rule = {
+            endpoint: apiEndpoint,
+            http_method: method,
+            strategy: limitStrategy,
+            fixed_window_counter_rule: fixedWindowCounter,
+            token_bucket_rule: tokenBucket
+        }
+
+        try {
+            await createNewRule(newRule)
+            closeAddNewRule()
+        } catch(error) {
+            toast.error("Unable to save rule: " + error, {
+                style: customToastStyle
+            })
+        }
+    }
 
 
 
@@ -108,7 +127,7 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, e
                             placeholder="Ex: - 10000"
                             value={tokenBucket?.bucket_capacity}
                             onChange={(e) => setTokenBucketRule({
-                                bucket_capacity: Number.parseInt(e.target.value),
+                                bucket_capacity: Number.parseInt(e.target.value) || 0,
                                 token_add_rate: tokenBucket?.token_add_rate || 0
                             })}
                         />
@@ -161,7 +180,7 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, e
 
             <div className='flex'>
                 <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {
-                    // addRule()
+                    addOrUpdateRule()
                 }}>
                     {
                         action === "ADD" ? "Add" : "Update"
