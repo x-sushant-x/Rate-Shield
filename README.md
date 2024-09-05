@@ -50,6 +50,11 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 ---
 
+#### How it works?
+<img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/architecture.png"></img>
+
+---
+
 #### ⚠️ **Important Information**
 
 - **Current Limitation:**  
