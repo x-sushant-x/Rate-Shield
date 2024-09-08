@@ -1,10 +1,40 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import APIConfigurationHeader from "../components/APIConfigurationHeader";
 import RulesTable from "../components/RulesTable";
 import AddOrUpdateRule from "../components/AddOrUpdateRule";
-import { rule } from "../api/rules";
+import { getAllRules, rule } from "../api/rules";
+import toast from "react-hot-toast";
+import { customToastStyle } from "../utils/toast_styles";
 
 export default function APIConfiguration() {
+    const [rulesData, setRulesData] = useState<rule[]>();
+    const errorShown = useRef(false)
+
+    const fetchRules = async () => {
+        try {
+            const rules = await getAllRules();
+            setRulesData(rules);
+            errorShown.current = false
+        } catch (error) {
+            console.error("Failed to fetch rules:", error);
+            if (errorShown.current === false) {
+                toast.error("Error: " + error, {
+                    style: customToastStyle
+                })
+                errorShown.current = true
+            }
+        }
+    };
+
+
+    
+
+    useEffect(() => {
+        fetchRules()
+    }, [])
+
+
+
     const [isAddNewRuleDialogOpen, setIsAddRuleDialogOpen] = useState(false)
     const [selectedRule, setSelectedRule] = useState<rule | null>(null)
 
@@ -34,7 +64,7 @@ export default function APIConfiguration() {
                         token_bucket_rule={selectedRule?.token_bucket_rule || null}
                     />
                     :
-                    <RulesTable openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} />
+                    <RulesTable openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} rulesData={rulesData} />
             }
         </div>
     )

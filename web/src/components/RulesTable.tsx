@@ -1,39 +1,13 @@
 import modifyRule from '../assets/modify_rule.png'
-import { getAllRules, rule } from '../api/rules';
-import { useEffect, useRef, useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
-import { customToastStyle } from '../utils/toast_styles';
+import { rule } from '../api/rules';
+import { Toaster } from 'react-hot-toast';
 
 interface Props {
     openAddOrUpdateRuleDialog: (rule: rule | null) => void
+    rulesData: rule[] | undefined
 }
 
-const RulesTable: React.FC<Props> = ({ openAddOrUpdateRuleDialog }) => {
-    const [data, setData] = useState<rule[]>();
-    const errorShown = useRef(false)
-
-    const fetchRules = async () => {
-        try {
-            const rules = await getAllRules();
-            setData(rules);
-            errorShown.current = false
-        } catch (error) {
-            console.error("Failed to fetch rules:", error);
-            if (errorShown.current === false) {
-                toast.error("Error: " + error, {
-                    style: customToastStyle
-                })
-                errorShown.current = true
-            }
-        }
-    };
-
-    useEffect(() => {
-        fetchRules()
-    }, [])
-
-
-
+const RulesTable: React.FC<Props> = ({ openAddOrUpdateRuleDialog, rulesData }) => {
     return (
         <div className="px-8 py-8">
             <table className="table-auto w-full text-left">
@@ -46,7 +20,9 @@ const RulesTable: React.FC<Props> = ({ openAddOrUpdateRuleDialog }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {data === undefined ? <div></div> : data.map((item, index) => (
+                    {rulesData === undefined ? <div>
+                        Unable to fetch rules.
+                    </div> : rulesData.map((item, index) => (
                         <>
                             <tr key={index}>
                                 <td style={{ width: "50%" }} className='pt-6'>{item.endpoint}</td>
