@@ -1,13 +1,13 @@
 package limiter
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
+	"github.com/x-sushant-x/RateShield/utils"
 )
 
 const (
@@ -26,7 +26,7 @@ func NewRateLimiterService(tokenBucket TokenBucketService, fixedWindow *FixedWin
 	}
 }
 
-func (l *Limiter) CheckLimit(ip, endpoint string) int {
+func (l *Limiter) CheckLimit(ip, endpoint string) models.RateLimitResponse {
 	key := ip + ":" + endpoint
 	rule, found, err := l.GetRule(endpoint)
 
@@ -42,10 +42,10 @@ func (l *Limiter) CheckLimit(ip, endpoint string) int {
 	if err != nil {
 		log.Err(err).Msg("unable to check limit")
 		// Notify on slack
-		return http.StatusOK
+		return utils.BuildRateLimitSuccessResponse(0, 0)
 	}
 
-	return http.StatusOK
+	return utils.BuildRateLimitSuccessResponse(0, 0)
 }
 
 func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {

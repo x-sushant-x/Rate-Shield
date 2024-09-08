@@ -10,6 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
+	"github.com/x-sushant-x/RateShield/utils"
 )
 
 const (
@@ -115,32 +116,37 @@ func (t *TokenBucketService) addTokens() {
 	}
 }
 
-func (t *TokenBucketService) processRequest(key string, rule models.Rule) int {
+func (t *TokenBucketService) processRequest(key string, rule models.Rule) models.RateLimitResponse {
 	bucket, found, err := getBucket(key)
 	if err != nil {
 		log.Error().Msgf("error while getting bucket %s" + err.Error())
-		return http.StatusInternalServerError
+		return utils.BuildRateLimitErrorResponse(500)
 	}
 
 	if !found {
 		b, err := spawnNewBucket(key, rule)
 		if err != nil {
-			return http.StatusInternalServerError
+			return utils.BuildRateLimitErrorResponse(500)
 		}
 		bucket = b
 	}
 
 	if !bucket.checkAvailiblity() {
-		return http.StatusTooManyRequests
+		return utils.BuildRateLimitErrorResponse(429)
 	}
 
 	bucket.AvailableTokens--
 
 	if err := bucket.saveBucket(); err != nil {
-		return http.StatusInternalServerError
+		return utils.BuildRateLimitErrorResponse(500)
 	}
 
-	return http.StatusOK
+	return models.RateLimitResponse{
+		RateLimit_Limit:     int64(bucket.Capacity),
+		RateLimit_Remaining: int64(bucket.AvailableTokens),
+		Success:             true,
+		HTTPStatusCode:      http.StatusOK,
+	}
 }
 
 func (t *TokenBucketService) checkAvailiblity() bool {

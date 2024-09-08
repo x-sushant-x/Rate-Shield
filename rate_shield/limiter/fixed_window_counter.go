@@ -2,12 +2,12 @@ package limiter
 
 import (
 	"encoding/json"
-	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
+	"github.com/x-sushant-x/RateShield/utils"
 )
 
 type FixedWindowService struct{}
@@ -16,21 +16,21 @@ func NewFixedWindowService() FixedWindowService {
 	return FixedWindowService{}
 }
 
-func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Rule) int {
+func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Rule) models.RateLimitResponse {
 	key := ip + ":" + endpoint
 
 	fixedWindow, found, err := fw.getFixedWindowFromRedis(key)
 	if err != nil {
 		log.Err(err).Msgf("error while getting fixed window")
-		return http.StatusInternalServerError
+		return utils.BuildRateLimitErrorResponse(500)
 	}
 
 	if !found {
 		_, err := fw.spawnNewFixedWindow(ip, endpoint, rule)
 		if err != nil {
-			return http.StatusInternalServerError
+			return utils.BuildRateLimitErrorResponse(500)
 		}
-		return http.StatusOK
+		return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-1)
 	}
 
 	now := time.Now().Unix()
@@ -43,11 +43,13 @@ func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Ru
 			err := fw.save(key, *fixedWindow)
 			if err != nil {
 				log.Err(err).Msg("error while saving fixed window")
-				return http.StatusInternalServerError
+				return utils.BuildRateLimitErrorResponse(500)
+
 			}
-			return http.StatusOK
+			return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-fixedWindow.CurrRequests)
 		} else {
-			return http.StatusTooManyRequests
+			return utils.BuildRateLimitErrorResponse(500)
+
 		}
 	} else {
 		fixedWindow.CurrRequests = 1
@@ -56,9 +58,10 @@ func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Ru
 		err := fw.save(key, *fixedWindow)
 		if err != nil {
 			log.Err(err).Msg("error while saving fixed window")
-			return http.StatusInternalServerError
+			return utils.BuildRateLimitErrorResponse(500)
+
 		}
-		return http.StatusOK
+		return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-fixedWindow.CurrRequests)
 	}
 }
 
