@@ -22,7 +22,7 @@ func NewServer(port int) Server {
 func (s Server) StartServer() error {
 	mux := http.NewServeMux()
 
-	s.registerRulesRoutes(mux)
+	s.rulesRoutes(mux)
 	s.registerRateLimiterRoutes(mux)
 
 	corsMux := s.setupCORS(mux)
@@ -55,13 +55,14 @@ func (s Server) setupCORS(h http.Handler) http.Handler {
 	})
 }
 
-func (s Server) registerRulesRoutes(mux *http.ServeMux) {
+func (s Server) rulesRoutes(mux *http.ServeMux) {
 	rulesSvc := service.RulesServiceRedis{}
 	rulesHandler := NewRulesAPIHandler(rulesSvc)
 
 	mux.HandleFunc("/rule/list", rulesHandler.ListAllRules)
 	mux.HandleFunc("/rule/add", rulesHandler.CreateOrUpdateRule)
 	mux.HandleFunc("/rule/delete", rulesHandler.DeleteRule)
+	mux.HandleFunc("/rule/search", rulesHandler.SearchRules)
 }
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {

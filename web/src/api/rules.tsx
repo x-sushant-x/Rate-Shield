@@ -46,6 +46,28 @@ export async function getAllRules(): Promise<rule[]> {
     }
 }
 
+export async function searchRulesViaEndpoint(searchText: string): Promise<rule[]> {
+    const url = `${baseUrl}rule/search?endpoint=${searchText}`;
+
+    try {
+        const response = await fetch(url, {
+            method: "GET",
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data: getAllRuleResponse = await response.json();
+        console.log("Response", data);
+
+        return data.data;
+    } catch (error) {
+        console.error("Failed to fetch rules:", error);
+        throw error;
+    }
+}
+
 
 export async function createNewRule(rule: rule) {
     const url = `${baseUrl}rule/add`;

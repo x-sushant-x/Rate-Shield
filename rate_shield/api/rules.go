@@ -22,7 +22,26 @@ func (h RulesAPIHandler) ListAllRules(w http.ResponseWriter, r *http.Request) {
 	rules, err := h.rulesSvc.GetAllRules()
 	if err != nil {
 		utils.InternalError(w)
+		return
 	}
+	utils.SuccessResponse(rules, w)
+}
+
+func (h RulesAPIHandler) SearchRules(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+
+	searchText := q.Get("endpoint")
+	if len(searchText) == 0 {
+		utils.BadRequestError(w)
+		return
+	}
+
+	rules, err := h.rulesSvc.SearchRule(searchText)
+	if err != nil {
+		utils.InternalError(w)
+		return
+	}
+
 	utils.SuccessResponse(rules, w)
 }
 
@@ -31,10 +50,12 @@ func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Reque
 		updateReq, err := utils.ParseAPIBody[models.Rule](r)
 		if err != nil {
 			utils.BadRequestError(w)
+			return
 		}
 		err = h.rulesSvc.CreateOrUpdateRule(updateReq)
 		if err != nil {
 			utils.InternalError(w)
+			return
 		}
 
 		utils.SuccessResponse("Rule Created Successfully", w)
@@ -48,11 +69,13 @@ func (h RulesAPIHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 		deleteReq, err := utils.ParseAPIBody[models.DeleteRuleDTO](r)
 		if err != nil {
 			utils.BadRequestError(w)
+			return
 		}
 
 		err = h.rulesSvc.DeleteRule(deleteReq.RuleKey)
 		if err != nil {
 			utils.InternalError(w)
+			return
 		}
 
 		utils.SuccessResponse("Rule Deleted Successfully", w)

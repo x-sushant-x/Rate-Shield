@@ -1,6 +1,8 @@
 package service
 
 import (
+	"strings"
+
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
@@ -8,6 +10,7 @@ import (
 
 type RulesService interface {
 	GetAllRules() ([]models.Rule, error)
+	SearchRule(searchText string) ([]models.Rule, error)
 	CreateOrUpdateRule(models.Rule) error
 	DeleteRule(endpoint string) error
 }
@@ -39,6 +42,22 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 	}
 
 	return rules, nil
+}
+
+func (h RulesServiceRedis) SearchRule(searchText string) ([]models.Rule, error) {
+	rules, err := h.GetAllRules()
+	if err != nil {
+		return nil, err
+	}
+	searchedRules := []models.Rule{}
+
+	for _, rule := range rules {
+		if strings.Contains(rule.APIEndpoint, searchText) {
+			searchedRules = append(searchedRules, rule)
+		}
+	}
+
+	return searchedRules, nil
 }
 
 func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {

@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import APIConfigurationHeader from "../components/APIConfigurationHeader";
 import RulesTable from "../components/RulesTable";
 import AddOrUpdateRule from "../components/AddOrUpdateRule";
-import { getAllRules, rule } from "../api/rules";
+import { getAllRules, rule, searchRulesViaEndpoint } from "../api/rules";
 import toast from "react-hot-toast";
 import { customToastStyle } from "../utils/toast_styles";
 
 export default function APIConfiguration() {
     const [rulesData, setRulesData] = useState<rule[]>();
+    const [searchRuleText, setSearchRuleText] = useState('');
     const errorShown = useRef(false)
 
     const fetchRules = async () => {
@@ -25,13 +26,32 @@ export default function APIConfiguration() {
             }
         }
     };
-
-
     
 
     useEffect(() => {
         fetchRules()
     }, [])
+
+    useEffect(() => {
+        const searchRules = async () => {
+            if(searchRuleText) {
+                try {
+                    const rules = await searchRulesViaEndpoint(searchRuleText);
+                    setRulesData(rules);
+                    errorShown.current = false
+                } catch (error) {
+                    console.error("Failed to fetch rules:", error);
+                    if (errorShown.current === false) {
+                        toast.error("Error: " + error, {
+                            style: customToastStyle
+                        })
+                        errorShown.current = true
+                    }
+                }
+            }
+        };
+        searchRules()
+    },[searchRuleText])
 
 
 
@@ -50,7 +70,7 @@ export default function APIConfiguration() {
 
     return (
         <div className="h-screen bg-white rounded-xl shadow-lg">
-            <APIConfigurationHeader openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} />
+            <APIConfigurationHeader openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} setSearchRuleText={setSearchRuleText} />
 
             {
                 isAddNewRuleDialogOpen ?
