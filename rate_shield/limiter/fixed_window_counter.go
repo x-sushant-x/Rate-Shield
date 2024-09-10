@@ -26,8 +26,9 @@ func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Ru
 	}
 
 	if !found {
-		_, err := fw.spawnNewFixedWindow(ip, endpoint, rule)
+		fixedWindow, err := fw.spawnNewFixedWindow(ip, endpoint, rule)
 		if err != nil {
+			log.Err(err).Msg("unable to get newly spawned fixed window from redis")
 			return utils.BuildRateLimitErrorResponse(500)
 		}
 		return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-1)
@@ -39,23 +40,20 @@ func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Ru
 		if fixedWindow.CurrRequests < fixedWindow.MaxRequests {
 			fixedWindow.CurrRequests++
 			fixedWindow.LastAccessTime = now
-
-			err := fw.save(key, *fixedWindow)
+			err := fw.save(key, fixedWindow)
 			if err != nil {
 				log.Err(err).Msg("error while saving fixed window")
 				return utils.BuildRateLimitErrorResponse(500)
-
 			}
 			return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-fixedWindow.CurrRequests)
 		} else {
-			return utils.BuildRateLimitErrorResponse(500)
-
+			return utils.BuildRateLimitErrorResponse(429)
 		}
 	} else {
 		fixedWindow.CurrRequests = 1
 		fixedWindow.LastAccessTime = now
 
-		err := fw.save(key, *fixedWindow)
+		err := fw.save(key, fixedWindow)
 		if err != nil {
 			log.Err(err).Msg("error while saving fixed window")
 			return utils.BuildRateLimitErrorResponse(500)
@@ -97,7 +95,7 @@ func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule mode
 		LastAccessTime: time.Now().Unix(),
 	}
 
-	if err := fw.save(key, fixedWindow); err != nil {
+	if err := fw.save(key, &fixedWindow); err != nil {
 		log.Err(err).Msg("unable to save fixed window to redis")
 		return nil, err
 	}
@@ -110,7 +108,7 @@ func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule mode
 	return &fixedWindow, nil
 }
 
-func (fw *FixedWindowService) save(key string, fixedWindow models.FixedWindowCounter) error {
+func (fw *FixedWindowService) save(key string, fixedWindow *models.FixedWindowCounter) error {
 	return redisClient.SetFixedWindowJSONObject(key, fixedWindow)
 }
 
