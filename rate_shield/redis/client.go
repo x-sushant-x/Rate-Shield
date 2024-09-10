@@ -26,7 +26,6 @@ func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
 
 	pingCmd := conn.Ping(ctx)
 	if pingCmd.Err() != nil {
-		log.Error().Msgf("unable to connect to redis on addr (%s): %s", addr, pingCmd.Err().Error())
 		return nil, pingCmd.Err()
 	}
 	return conn, nil
@@ -121,11 +120,10 @@ func DeleteRule(key string) error {
 	return nil
 }
 
-func checkError(err error) error {
+func checkError(err error) {
 	if err != nil {
-		return err
+		log.Fatal().Err(err).Msg("unable to connect to redis")
 	}
-	return nil
 }
 
 func SetFixedWindowJSONObject(key string, val interface{}) error {

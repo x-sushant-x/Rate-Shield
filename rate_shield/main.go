@@ -20,10 +20,7 @@ func init() {
 func main() {
 	config.LoadConfig()
 
-	err := redisClient.Connect()
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
-	}
+	redisClient.Connect()
 
 	tokenBucketSvc := limiter.NewTokenBucketService()
 	fixedWindowSvc := limiter.NewFixedWindowService()
