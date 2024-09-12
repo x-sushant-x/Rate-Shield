@@ -50,6 +50,11 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 ---
 
+#### 🪧 Usage Guide
+  Check out this [document](https://github.com/x-sushant-x/Rate-Shield/tree/main/rate_shield/documentation).
+
+---
+
 #### How it works?
 <img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/architecture.png"></img>
 
@@ -58,7 +63,7 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 #### ⚠️ **Important Information**
 
 - **Current Limitation:**  
-  At present, RateShield only supports the Token Bucket algorithm, which may not fit all use cases.
+  At present, RateShield only supports the Token Bucket & Fixed Window Counter algorithm, which may not fit all use cases.
   
 - **Under Development:**  
   RateShield is still in progress and should not be used in production environments just yet. Stay tuned for the official v1.0 release!
