@@ -20,6 +20,7 @@ func NewServer(port int) Server {
 }
 
 func (s Server) StartServer() error {
+	log.Info().Msg("Setting Up API Endpoints ✅")
 	mux := http.NewServeMux()
 
 	s.rulesRoutes(mux)
@@ -31,6 +32,8 @@ func (s Server) StartServer() error {
 		Addr:    fmt.Sprintf(":%d", s.port),
 		Handler: corsMux,
 	}
+
+	log.Info().Msg("Rate Shield Running ✅")
 
 	err := server.ListenAndServe()
 	if err != nil {

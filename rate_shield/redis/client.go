@@ -44,7 +44,7 @@ func Connect() error {
 	checkError(err)
 	FixedWindowCounterClient = fixedWindowClient
 
-	log.Info().Msg("Connected To Redis")
+	log.Info().Msg("Connected To Redis ✅")
 	return nil
 }
 

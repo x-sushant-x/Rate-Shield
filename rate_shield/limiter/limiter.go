@@ -53,6 +53,7 @@ func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
 }
 
 func (l *Limiter) StartRateLimiter() {
+	log.Info().Msg("Starting Limiter Service ✅")
 	l.startAddTokenJob()
 }
 

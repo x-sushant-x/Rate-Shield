@@ -7,7 +7,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/api"
-	"github.com/x-sushant-x/RateShield/config"
 	"github.com/x-sushant-x/RateShield/limiter"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
@@ -18,7 +17,6 @@ func init() {
 }
 
 func main() {
-	config.LoadConfig()
 
 	redisClient.Connect()
 
