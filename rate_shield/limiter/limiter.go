@@ -15,11 +15,11 @@ const (
 )
 
 type Limiter struct {
-	tokenBucket TokenBucketService
+	tokenBucket *TokenBucketService
 	fixedWindow *FixedWindowService
 }
 
-func NewRateLimiterService(tokenBucket TokenBucketService, fixedWindow *FixedWindowService) Limiter {
+func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService) Limiter {
 	return Limiter{
 		tokenBucket: tokenBucket,
 		fixedWindow: fixedWindow,

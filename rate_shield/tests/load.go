@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	totalRequests  = 500000
+	totalRequests  = 1000000
 	maxConcurrency = 100
 
 	successResponse         = 0
@@ -21,7 +21,7 @@ var (
 func main() {
 	var IPs []net.IP
 
-	for i := 0; i < 1000; i++ {
+	for i := 0; i < 10000; i++ {
 		IPs = append(IPs, generateRandomIP())
 	}
 
@@ -50,7 +50,7 @@ func main() {
 			}
 
 			req.Header.Add("ip", ip.String())
-			req.Header.Add("endpoint", "/api/v1/resource")
+			req.Header.Add("endpoint", "/api/v1/send-otp")
 
 			res, _ := http.DefaultClient.Do(req)
 			if res.StatusCode == 200 {

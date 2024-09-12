@@ -1,4 +1,4 @@
-const baseUrl = "http://127.0.0.1:8080/"
+const baseUrl = "http://localhost:8080/"
 
 export interface rule {
     strategy: string;

@@ -20,15 +20,12 @@ func init() {
 func main() {
 	config.LoadConfig()
 
-	err := redisClient.Connect()
-	if err != nil {
-		log.Fatal().Err(err).Msg(err.Error())
-	}
+	redisClient.Connect()
 
 	tokenBucketSvc := limiter.NewTokenBucketService()
 	fixedWindowSvc := limiter.NewFixedWindowService()
 
-	limiter := limiter.NewRateLimiterService(tokenBucketSvc, &fixedWindowSvc)
+	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
 	limiter.StartRateLimiter()
 
 	server := api.NewServer(8080)

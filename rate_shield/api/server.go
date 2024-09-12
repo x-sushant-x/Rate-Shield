@@ -69,7 +69,7 @@ func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
 	tokenBucketSvc := limiter.NewTokenBucketService()
 	fixedWindowSvc := limiter.NewFixedWindowService()
 
-	limiter := limiter.NewRateLimiterService(tokenBucketSvc, &fixedWindowSvc)
+	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
 	rateLimiterHandler := NewRateLimitHandler(limiter)
 
 	mux.HandleFunc("/check-limit", rateLimiterHandler.CheckRateLimit)
