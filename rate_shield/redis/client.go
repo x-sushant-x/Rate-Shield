@@ -31,6 +31,17 @@ func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
 	return conn, nil
 }
 
+func NewTokenBucketClient() (RedisTokenBucket, error) {
+	client, err := createNewRedisConnection("localhost:6379", 1)
+	if err != nil {
+		return RedisTokenBucket{}, err
+	}
+
+	return RedisTokenBucket{
+		client: client,
+	}, nil
+}
+
 func Connect() error {
 	ruleClient, err := createNewRedisConnection("localhost:6379", 0)
 	checkError(err)
@@ -46,36 +57,6 @@ func Connect() error {
 
 	log.Info().Msg("Connected To Redis ✅")
 	return nil
-}
-
-func SetTokenBucketJSONObject(key string, val interface{}) error {
-	err := TokenBucketClient.JSONSet(ctx, key, ".", val).Err()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetTokenBucketJSONObject(key string) ([]byte, bool, error) {
-	res, err := TokenBucketClient.JSONGet(ctx, key, ".").Result()
-	if err == redis.Nil || len(res) == 0 {
-		return nil, false, nil
-	} else if err != nil {
-		return nil, false, err
-	}
-
-	return []byte(res), true, nil
-}
-
-func Get(key string) ([]byte, bool, error) {
-	res, err := TokenBucketClient.Get(ctx, key).Result()
-	if err == redis.Nil {
-		return nil, false, nil
-	} else if err != nil {
-		return nil, false, err
-	}
-
-	return []byte(res), true, nil
 }
 
 func GetRule(key string) (*models.Rule, bool, error) {

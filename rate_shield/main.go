@@ -20,7 +20,12 @@ func main() {
 
 	redisClient.Connect()
 
-	tokenBucketSvc := limiter.NewTokenBucketService()
+	redisTokenBucket, err := redisClient.NewTokenBucketClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
+	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket)
 	fixedWindowSvc := limiter.NewFixedWindowService()
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)

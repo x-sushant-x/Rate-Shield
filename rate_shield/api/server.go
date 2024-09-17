@@ -6,6 +6,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/limiter"
+	redisClient "github.com/x-sushant-x/RateShield/redis"
 	"github.com/x-sushant-x/RateShield/service"
 )
 
@@ -69,11 +70,20 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 }
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
-	tokenBucketSvc := limiter.NewTokenBucketService()
+
+	tokenBucketSvc := limiter.NewTokenBucketService(getRedisTokenBucket())
 	fixedWindowSvc := limiter.NewFixedWindowService()
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
 	rateLimiterHandler := NewRateLimitHandler(limiter)
 
 	mux.HandleFunc("/check-limit", rateLimiterHandler.CheckRateLimit)
+}
+
+func getRedisTokenBucket() redisClient.RedisTokenBucket {
+	redisTokenBucket, err := redisClient.NewTokenBucketClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	return redisTokenBucket
 }
