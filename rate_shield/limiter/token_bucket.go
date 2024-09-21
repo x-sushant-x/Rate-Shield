@@ -30,11 +30,13 @@ func NewTokenBucketService(client redisClient.RedisTokenBucketClient) TokenBucke
 func (t *TokenBucketService) addTokensToBucket(key string) {
 	bucket, found, err := t.getBucket(key)
 	if err != nil {
+		// Notify on slack
 		log.Error().Err(err).Msg("Error fetching bucket")
 		return
 	}
 
 	if !found {
+		// Notify on slack
 		log.Error().Err(err).Msg("Error fetching bucket with given key")
 		return
 	}
@@ -44,12 +46,17 @@ func (t *TokenBucketService) addTokensToBucket(key string) {
 		bucket.AvailableTokens += min(bucket.TokenAddRate, tokensToAdd)
 
 		if err := t.redisClient.JSONSet(key, bucket); err != nil {
+			// Notify on slack
 			log.Error().Err(err).Msg("Error saving updated bucket to Redis")
 		}
 	}
 }
 
-func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int) *models.Bucket {
+func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int) (*models.Bucket, error) {
+	if err := utils.ValidateCreateBucketReq(ip, endpoint, capacity, tokenAddRate); err != nil {
+		return nil, err
+	}
+
 	b := &models.Bucket{
 		ClientIP:        ip,
 		CreatedAt:       time.Now().Unix(),
@@ -60,12 +67,19 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 		TokenAddTime:    DefaultTokenAddTime,
 	}
 
-	t.saveBucket(b)
-	return b
+	err := t.saveBucket(b)
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
-func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule models.Rule) *models.Bucket {
-	return t.createBucket(ip, endpoint, int(rule.TokenBucketRule.BucketCapacity), int(rule.TokenBucketRule.TokenAddRate))
+func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule models.Rule) (*models.Bucket, error) {
+	b, err := t.createBucket(ip, endpoint, int(rule.TokenBucketRule.BucketCapacity), int(rule.TokenBucketRule.TokenAddRate))
+	if err != nil {
+		return nil, err
+	}
+	return b, nil
 }
 
 func parseKey(key string) (string, string) {
@@ -75,7 +89,7 @@ func parseKey(key string) (string, string) {
 
 func (t *TokenBucketService) spawnNewBucket(key string, rule models.Rule) (*models.Bucket, error) {
 	ip, endpoint := parseKey(key)
-	return t.createBucketFromRule(ip, endpoint, rule), nil
+	return t.createBucketFromRule(ip, endpoint, rule)
 }
 
 func (t *TokenBucketService) getBucket(key string) (*models.Bucket, bool, error) {
@@ -145,7 +159,7 @@ func (t *TokenBucketService) saveBucket(bucket *models.Bucket) error {
 		return err
 	}
 
-	if err := redisClient.TokenBucketClient.Expire(context.Background(), key, BucketExpireTime).Err(); err != nil {
+	if err := t.redisClient.Expire(key, BucketExpireTime); err != nil {
 		log.Error().Err(err).Msg("Error setting bucket expiration in Redis")
 		return err
 	}
