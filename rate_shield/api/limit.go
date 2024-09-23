@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/x-sushant-x/RateShield/limiter"
+	"github.com/x-sushant-x/RateShield/utils"
 )
 
 type RateLimitHandler struct {
@@ -20,6 +21,11 @@ func NewRateLimitHandler(limiterSvc limiter.Limiter) RateLimitHandler {
 func (h RateLimitHandler) CheckRateLimit(w http.ResponseWriter, r *http.Request) {
 	ip := r.Header.Get("ip")
 	endpoint := r.Header.Get("endpoint")
+
+	badRequest := utils.ValidateLimitRequest(ip, endpoint)
+	if badRequest != nil {
+		w.WriteHeader(http.StatusBadRequest)
+	}
 
 	resp := h.limiterSvc.CheckLimit(ip, endpoint)
 
