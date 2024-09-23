@@ -26,7 +26,7 @@ func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWi
 	}
 }
 
-func (l *Limiter) CheckLimit(ip, endpoint string) models.RateLimitResponse {
+func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 	key := ip + ":" + endpoint
 	rule, found, err := l.GetRule(endpoint)
 

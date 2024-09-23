@@ -6,8 +6,8 @@ import (
 	"github.com/x-sushant-x/RateShield/models"
 )
 
-func BuildRateLimitErrorResponse(statusCode int) models.RateLimitResponse {
-	return models.RateLimitResponse{
+func BuildRateLimitErrorResponse(statusCode int) *models.RateLimitResponse {
+	return &models.RateLimitResponse{
 		RateLimit_Limit:     -1,
 		RateLimit_Remaining: -1,
 		Success:             false,
@@ -15,8 +15,8 @@ func BuildRateLimitErrorResponse(statusCode int) models.RateLimitResponse {
 	}
 }
 
-func BuildRateLimitSuccessResponse(limit, remaining int64) models.RateLimitResponse {
-	return models.RateLimitResponse{
+func BuildRateLimitSuccessResponse(limit, remaining int64) *models.RateLimitResponse {
+	return &models.RateLimitResponse{
 		RateLimit_Limit:     limit,
 		RateLimit_Remaining: remaining,
 		Success:             true,

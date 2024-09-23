@@ -16,8 +16,8 @@ func NewFixedWindowService() FixedWindowService {
 	return FixedWindowService{}
 }
 
-func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Rule) models.RateLimitResponse {
-	key := ip + ":" + endpoint
+func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Rule) *models.RateLimitResponse {
+	key := fw.parseToKey(ip, endpoint)
 
 	fixedWindow, found, err := fw.getFixedWindowFromRedis(key)
 	if err != nil {
@@ -34,24 +34,24 @@ func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Ru
 		return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-1)
 	}
 
-	now := time.Now().Unix()
+	currTime := time.Now().Unix()
 
-	if now-fixedWindow.LastAccessTime < int64(fixedWindow.Window) {
+	if currTime-fixedWindow.LastAccessTime < int64(fixedWindow.Window) {
 		if fixedWindow.CurrRequests < fixedWindow.MaxRequests {
 			fixedWindow.CurrRequests++
-			fixedWindow.LastAccessTime = now
+			fixedWindow.LastAccessTime = currTime
 			err := fw.save(key, fixedWindow)
 			if err != nil {
 				log.Err(err).Msg("error while saving fixed window")
 				return utils.BuildRateLimitErrorResponse(500)
 			}
 			return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-fixedWindow.CurrRequests)
-		} else {
-			return utils.BuildRateLimitErrorResponse(429)
 		}
+		return utils.BuildRateLimitErrorResponse(429)
+
 	} else {
 		fixedWindow.CurrRequests = 1
-		fixedWindow.LastAccessTime = now
+		fixedWindow.LastAccessTime = currTime
 
 		err := fw.save(key, fixedWindow)
 		if err != nil {
@@ -61,6 +61,20 @@ func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Ru
 		}
 		return utils.BuildRateLimitSuccessResponse(fixedWindow.MaxRequests, fixedWindow.MaxRequests-fixedWindow.CurrRequests)
 	}
+}
+
+func (fw *FixedWindowService) ResetWindow(key string, currTime int64, window *models.FixedWindowCounter) *models.RateLimitResponse {
+	window.CurrRequests = 1
+	window.LastAccessTime = currTime
+
+	err := fw.save(key, window)
+	if err != nil {
+		log.Err(err).Msg("error while saving fixed window")
+		return utils.BuildRateLimitErrorResponse(500)
+
+	}
+	return utils.BuildRateLimitSuccessResponse(window.MaxRequests, window.MaxRequests-window.CurrRequests)
+
 }
 
 func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.FixedWindowCounter, bool, error) {
@@ -84,7 +98,7 @@ func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.Fixed
 }
 
 func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule models.Rule) (*models.FixedWindowCounter, error) {
-	key := ip + ":" + endpoint
+	key := fw.parseToKey(ip, endpoint)
 	fixedWindow := models.FixedWindowCounter{
 		Endpoint:       endpoint,
 		ClientIP:       ip,
@@ -120,4 +134,8 @@ func unmarshalFixedWindow(data []byte) (*models.FixedWindowCounter, error) {
 		return &fixedWindow, err
 	}
 	return &fixedWindow, nil
+}
+
+func (fw *FixedWindowService) parseToKey(ip, endpoint string) string {
+	return ip + ":" + endpoint
 }

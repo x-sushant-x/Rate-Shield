@@ -119,7 +119,7 @@ func (t *TokenBucketService) addTokens() {
 	}
 }
 
-func (t *TokenBucketService) processRequest(key string, rule models.Rule) models.RateLimitResponse {
+func (t *TokenBucketService) processRequest(key string, rule models.Rule) *models.RateLimitResponse {
 	bucket, found, err := t.getBucket(key)
 	if err != nil {
 		log.Error().Msgf("error while getting bucket %s" + err.Error())
@@ -144,7 +144,7 @@ func (t *TokenBucketService) processRequest(key string, rule models.Rule) models
 		return utils.BuildRateLimitErrorResponse(500)
 	}
 
-	return models.RateLimitResponse{
+	return &models.RateLimitResponse{
 		RateLimit_Limit:     int64(bucket.Capacity),
 		RateLimit_Remaining: int64(bucket.AvailableTokens),
 		Success:             true,
