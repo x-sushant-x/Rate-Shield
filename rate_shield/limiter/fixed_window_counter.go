@@ -16,7 +16,7 @@ func NewFixedWindowService() FixedWindowService {
 	return FixedWindowService{}
 }
 
-func (fw *FixedWindowService) processRequest(ip, endpoint string, rule models.Rule) *models.RateLimitResponse {
+func (fw *FixedWindowService) processRequest(ip, endpoint string, rule *models.Rule) *models.RateLimitResponse {
 	key := fw.parseToKey(ip, endpoint)
 
 	fixedWindow, found, err := fw.getFixedWindowFromRedis(key)
@@ -97,7 +97,7 @@ func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.Fixed
 	return fixedWindow, true, nil
 }
 
-func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule models.Rule) (*models.FixedWindowCounter, error) {
+func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule *models.Rule) (*models.FixedWindowCounter, error) {
 	key := fw.parseToKey(ip, endpoint)
 	fixedWindow := models.FixedWindowCounter{
 		Endpoint:       endpoint,

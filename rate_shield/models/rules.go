@@ -4,6 +4,7 @@ type Rule struct {
 	Strategy               string                  `json:"strategy"`
 	APIEndpoint            string                  `json:"endpoint"`
 	HTTPMethod             string                  `json:"http_method"`
+	AllowOnError           bool                    `json:"allow_on_error"`
 	TokenBucketRule        *TokenBucketRule        `json:"token_bucket_rule,omitempty"`
 	FixedWindowCounterRule *FixedWindowCounterRule `json:"fixed_window_counter_rule,omitempty"`
 }

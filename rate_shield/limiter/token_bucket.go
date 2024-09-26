@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-co-op/gocron/v2"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
@@ -74,7 +75,7 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 	return b, nil
 }
 
-func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule models.Rule) (*models.Bucket, error) {
+func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule *models.Rule) (*models.Bucket, error) {
 	b, err := t.createBucket(ip, endpoint, int(rule.TokenBucketRule.BucketCapacity), int(rule.TokenBucketRule.TokenAddRate))
 	if err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ func parseKey(key string) (string, string) {
 	return parts[0], parts[1]
 }
 
-func (t *TokenBucketService) spawnNewBucket(key string, rule models.Rule) (*models.Bucket, error) {
+func (t *TokenBucketService) spawnNewBucket(key string, rule *models.Rule) (*models.Bucket, error) {
 	ip, endpoint := parseKey(key)
 	return t.createBucketFromRule(ip, endpoint, rule)
 }
@@ -119,7 +120,7 @@ func (t *TokenBucketService) addTokens() {
 	}
 }
 
-func (t *TokenBucketService) processRequest(key string, rule models.Rule) *models.RateLimitResponse {
+func (t *TokenBucketService) processRequest(key string, rule *models.Rule) *models.RateLimitResponse {
 	bucket, found, err := t.getBucket(key)
 	if err != nil {
 		log.Error().Msgf("error while getting bucket %s" + err.Error())
@@ -165,4 +166,21 @@ func (t *TokenBucketService) saveBucket(bucket *models.Bucket) error {
 	}
 
 	return nil
+}
+
+func (t *TokenBucketService) startAddTokenJob() {
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = s.NewJob(gocron.DurationJob(TokenAddTime), gocron.NewTask(func() {
+		t.addTokens()
+	}))
+
+	if err != nil {
+		panic(err)
+	}
+
+	s.Start()
 }
