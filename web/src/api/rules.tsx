@@ -6,6 +6,7 @@ export interface rule {
     http_method: string;
     fixed_window_counter_rule: fixedWindowCounterRule | null
     token_bucket_rule: tokenBucketRule | null
+    allow_on_error: boolean
 }
 
 export interface fixedWindowCounterRule {

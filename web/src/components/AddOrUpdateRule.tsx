@@ -13,35 +13,42 @@ interface Props {
     httpMethod?: string
     fixed_window_counter_rule: fixedWindowCounterRule | null
     token_bucket_rule: tokenBucketRule | null
+    allow_on_error: boolean
 }
 
 
 
-const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, endpoint, httpMethod, token_bucket_rule, fixed_window_counter_rule }) => {
+const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, endpoint, httpMethod, token_bucket_rule, fixed_window_counter_rule, allow_on_error }) => {
     const [apiEndpoint, setApiEndpoint] = useState(endpoint || '');
     const [limitStrategy, setLimitStrategy] = useState(strategy);
     const [method, setHttpMethod] = useState(httpMethod || '');
     const [tokenBucket, setTokenBucketRule] = useState(token_bucket_rule)
     const [fixedWindowCounter, setFixedWindowCounterRule] = useState(fixed_window_counter_rule)
+    const [allowOnError, setAllowOnError] = useState(allow_on_error || false)
 
 
     const addOrUpdateRule = async () => {
-        const newRule : rule = {
+        const newRule: rule = {
             endpoint: apiEndpoint,
             http_method: method,
             strategy: limitStrategy,
             fixed_window_counter_rule: fixedWindowCounter,
-            token_bucket_rule: tokenBucket
+            token_bucket_rule: tokenBucket,
+            allow_on_error: allowOnError
         }
 
         try {
             await createNewRule(newRule)
             closeAddNewRule()
-        } catch(error) {
+        } catch (error) {
             toast.error("Unable to save rule: " + error, {
                 style: customToastStyle
             })
         }
+    }
+
+    const handleAllowOnErrorCheckbox = () => {
+        setAllowOnError(!allowOnError)
     }
 
 
@@ -177,6 +184,18 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, e
 
                         : <div></div>
             }
+
+            <br></br>
+
+            <label className="flex items-center space-x-3">
+                <input
+                    type="checkbox"
+                    checked = {allowOnError}
+                    onChange= {handleAllowOnErrorCheckbox}
+                    className="appearance-none h-4 w-4 border border-gray-700 rounded-md checked:bg-blue-600 checked:border-transparent focus:outline-none transition duration-300 ease-in-out"
+                />
+                <span className="text-gray-700">Allow on error?</span>
+            </label>
 
             <div className='flex'>
                 <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {

@@ -82,6 +82,7 @@ export default function APIConfiguration() {
                         httpMethod={selectedRule?.http_method}
                         fixed_window_counter_rule={selectedRule?.fixed_window_counter_rule || null}
                         token_bucket_rule={selectedRule?.token_bucket_rule || null}
+                        allow_on_error={selectedRule?.allow_on_error || false}
                     />
                     :
                     <RulesTable openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} rulesData={rulesData} />
