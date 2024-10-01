@@ -37,6 +37,8 @@ func NewTokenBucketClient() (RedisTokenBucket, error) {
 		return RedisTokenBucket{}, err
 	}
 
+	TokenBucketClient = client
+
 	return RedisTokenBucket{
 		client: client,
 	}, nil
@@ -46,10 +48,6 @@ func Connect() error {
 	ruleClient, err := createNewRedisConnection("localhost:6379", 0)
 	checkError(err)
 	RuleClient = ruleClient
-
-	tokenBucketClient, err := createNewRedisConnection("localhost:6379", 1)
-	checkError(err)
-	TokenBucketClient = tokenBucketClient
 
 	fixedWindowClient, err := createNewRedisConnection("localhost:6379", 2)
 	checkError(err)
