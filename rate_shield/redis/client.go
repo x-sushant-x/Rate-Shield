@@ -3,7 +3,6 @@ package redisClient
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -11,10 +10,9 @@ import (
 )
 
 var (
-	TokenBucketClient        *redis.Client
-	RuleClient               *redis.Client
-	FixedWindowCounterClient *redis.Client
-	ctx                      = context.Background()
+	TokenBucketClient *redis.Client
+	RuleClient        *redis.Client
+	ctx               = context.Background()
 )
 
 func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
@@ -44,14 +42,21 @@ func NewTokenBucketClient() (RedisTokenBucket, error) {
 	}, nil
 }
 
+func NewFixedWindowClient() (RedisFixedWindow, error) {
+	client, err := createNewRedisConnection("localhost:6379", 2)
+	if err != nil {
+		return RedisFixedWindow{}, err
+	}
+
+	return RedisFixedWindow{
+		client: client,
+	}, nil
+}
+
 func Connect() error {
 	ruleClient, err := createNewRedisConnection("localhost:6379", 0)
 	checkError(err)
 	RuleClient = ruleClient
-
-	fixedWindowClient, err := createNewRedisConnection("localhost:6379", 2)
-	checkError(err)
-	FixedWindowCounterClient = fixedWindowClient
 
 	log.Info().Msg("Connected To Redis ✅")
 	return nil
@@ -103,28 +108,4 @@ func checkError(err error) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to connect to redis")
 	}
-}
-
-func SetFixedWindowJSONObject(key string, val interface{}) error {
-	err := FixedWindowCounterClient.JSONSet(ctx, key, ".", val).Err()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func GetFixedWindowJSONObject(key string) ([]byte, bool, error) {
-	res, err := FixedWindowCounterClient.JSONGet(ctx, key, ".").Result()
-	if err == redis.Nil || len(res) == 0 {
-		return nil, false, nil
-	} else if err != nil {
-		return nil, false, err
-	}
-
-	return []byte(res), true, nil
-}
-
-func SetFixedWindowExpireTime(key string, expireTime time.Duration) error {
-	_, err := FixedWindowCounterClient.Expire(ctx, key, expireTime).Result()
-	return err
 }

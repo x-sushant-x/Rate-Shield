@@ -25,8 +25,13 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
+	redisFixedWindow, err := redisClient.NewFixedWindowClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket)
-	fixedWindowSvc := limiter.NewFixedWindowService()
+	fixedWindowSvc := limiter.NewFixedWindowService(redisFixedWindow)
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
 	limiter.StartRateLimiter()

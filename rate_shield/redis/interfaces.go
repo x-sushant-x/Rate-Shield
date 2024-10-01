@@ -20,7 +20,7 @@ type RedisRuleClient interface {
 }
 
 type RedisFixedWindowClient interface {
-	JSONSet(key string, path string, val interface{}) error
-	JSONGet(key string, path string) (string, error)
-	Expire(key string, expiration time.Duration) error
+	JSONSet(key string, val interface{}) error
+	JSONGet(key string) (*models.FixedWindowCounter, bool, error)
+	Expire(key string, expireTime time.Duration) error
 }

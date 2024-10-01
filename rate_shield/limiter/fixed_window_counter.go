@@ -10,10 +10,14 @@ import (
 	"github.com/x-sushant-x/RateShield/utils"
 )
 
-type FixedWindowService struct{}
+type FixedWindowService struct {
+	redisClient redisClient.RedisFixedWindowClient
+}
 
-func NewFixedWindowService() FixedWindowService {
-	return FixedWindowService{}
+func NewFixedWindowService(client redisClient.RedisFixedWindowClient) FixedWindowService {
+	return FixedWindowService{
+		redisClient: client,
+	}
 }
 
 func (fw *FixedWindowService) processRequest(ip, endpoint string, rule *models.Rule) *models.RateLimitResponse {
@@ -78,7 +82,7 @@ func (fw *FixedWindowService) ResetWindow(key string, currTime int64, window *mo
 }
 
 func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.FixedWindowCounter, bool, error) {
-	data, found, err := redisClient.GetFixedWindowJSONObject(key)
+	fixedWindow, found, err := fw.redisClient.JSONGet(key)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching fixed window from Redis")
@@ -89,11 +93,6 @@ func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.Fixed
 		return nil, false, nil
 	}
 
-	fixedWindow, err := unmarshalFixedWindow(data)
-	if err != nil {
-		log.Error().Err(err).Msg("Error unmarshalling fixed window from Redis")
-		return nil, false, err
-	}
 	return fixedWindow, true, nil
 }
 
@@ -114,7 +113,7 @@ func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule *mod
 		return nil, err
 	}
 
-	err := redisClient.SetFixedWindowExpireTime(key, time.Duration(fixedWindow.Window)*time.Second)
+	err := fw.redisClient.Expire(key, time.Duration(fixedWindow.Window)*time.Second)
 	if err != nil {
 		log.Err(err).Msg("unable to set expire time of fixed window in redis")
 		return nil, err
@@ -123,7 +122,7 @@ func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule *mod
 }
 
 func (fw *FixedWindowService) save(key string, fixedWindow *models.FixedWindowCounter) error {
-	return redisClient.SetFixedWindowJSONObject(key, fixedWindow)
+	return fw.redisClient.JSONSet(key, fixedWindow)
 }
 
 func unmarshalFixedWindow(data []byte) (*models.FixedWindowCounter, error) {

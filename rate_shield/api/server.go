@@ -72,7 +72,7 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
 
 	tokenBucketSvc := limiter.NewTokenBucketService(getRedisTokenBucket())
-	fixedWindowSvc := limiter.NewFixedWindowService()
+	fixedWindowSvc := limiter.NewFixedWindowService(getRedisFixedWindowClient())
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
 	rateLimiterHandler := NewRateLimitHandler(limiter)
@@ -86,4 +86,12 @@ func getRedisTokenBucket() redisClient.RedisTokenBucket {
 		log.Fatal().Err(err)
 	}
 	return redisTokenBucket
+}
+
+func getRedisFixedWindowClient() redisClient.RedisFixedWindow {
+	redisFixedWindow, err := redisClient.NewFixedWindowClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	return redisFixedWindow
 }
