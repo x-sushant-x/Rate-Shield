@@ -60,7 +60,13 @@ func (s Server) setupCORS(h http.Handler) http.Handler {
 }
 
 func (s Server) rulesRoutes(mux *http.ServeMux) {
-	rulesSvc := service.RulesServiceRedis{}
+	redisRuleClient, err := redisClient.NewRulesClient()
+	if err != nil {
+		log.Err(err).Msg("unable to setup new redis rules client")
+		log.Fatal()
+	}
+
+	rulesSvc := service.NewRedisRulesService(redisRuleClient)
 	rulesHandler := NewRulesAPIHandler(rulesSvc)
 
 	mux.HandleFunc("/rule/list", rulesHandler.ListAllRules)
@@ -74,7 +80,7 @@ func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
 	tokenBucketSvc := limiter.NewTokenBucketService(getRedisTokenBucket())
 	fixedWindowSvc := limiter.NewFixedWindowService(getRedisFixedWindowClient())
 
-	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
+	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, getRedisRulesSvc())
 	rateLimiterHandler := NewRateLimitHandler(limiter)
 
 	mux.HandleFunc("/check-limit", rateLimiterHandler.CheckRateLimit)
@@ -94,4 +100,12 @@ func getRedisFixedWindowClient() redisClient.RedisFixedWindow {
 		log.Fatal().Err(err)
 	}
 	return redisFixedWindow
+}
+
+func getRedisRulesSvc() service.RulesServiceRedis {
+	redisRulesClient, err := redisClient.NewRulesClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+	return service.NewRedisRulesService(redisRulesClient)
 }

@@ -13,10 +13,10 @@ type RedisTokenBucketClient interface {
 }
 
 type RedisRuleClient interface {
-	JSONSet(key string, path string, val interface{}) error
-	JSONGet(key string, path string) (string, error)
-	Keys(pattern string) ([]string, error)
-	Del(key string) error
+	GetRule(key string) (*models.Rule, bool, error)
+	GetAllRuleKeys() ([]string, bool, error)
+	SetRule(key string, val interface{}) error
+	DeleteRule(key string) error
 }
 
 type RedisFixedWindowClient interface {

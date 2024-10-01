@@ -5,7 +5,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
-	redisClient "github.com/x-sushant-x/RateShield/redis"
+	"github.com/x-sushant-x/RateShield/service"
 	"github.com/x-sushant-x/RateShield/utils"
 )
 
@@ -14,11 +14,12 @@ const (
 )
 
 type Limiter struct {
-	tokenBucket *TokenBucketService
-	fixedWindow *FixedWindowService
+	tokenBucket  *TokenBucketService
+	fixedWindow  *FixedWindowService
+	redisRuleSvc service.RulesService
 }
 
-func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService) Limiter {
+func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService, redisRuleSvc service.RulesService) Limiter {
 	return Limiter{
 		tokenBucket: tokenBucket,
 		fixedWindow: fixedWindow,
@@ -76,7 +77,7 @@ func (l *Limiter) processFixedWindowReq(ip, endpoint string, rule *models.Rule) 
 }
 
 func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
-	return redisClient.GetRule(key)
+	return l.redisRuleSvc.GetRule(key)
 }
 
 func (l *Limiter) StartRateLimiter() {

@@ -2,16 +2,13 @@ package redisClient
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
-	"github.com/x-sushant-x/RateShield/models"
 )
 
 var (
 	TokenBucketClient *redis.Client
-	RuleClient        *redis.Client
 	ctx               = context.Background()
 )
 
@@ -53,55 +50,15 @@ func NewFixedWindowClient() (RedisFixedWindow, error) {
 	}, nil
 }
 
-func Connect() error {
-	ruleClient, err := createNewRedisConnection("localhost:6379", 0)
-	checkError(err)
-	RuleClient = ruleClient
-
-	log.Info().Msg("Connected To Redis ✅")
-	return nil
-}
-
-func GetRule(key string) (*models.Rule, bool, error) {
-	res, err := RuleClient.JSONGet(ctx, key).Result()
-	if err == redis.Nil {
-		return nil, false, nil
-	} else if err != nil {
-		return nil, false, err
-	}
-
-	var rule models.Rule
-	err = json.Unmarshal([]byte(res), &rule)
+func NewRulesClient() (RedisRules, error) {
+	client, err := createNewRedisConnection("localhost:6379", 0)
 	if err != nil {
-		return nil, false, nil
+		return RedisRules{}, err
 	}
 
-	return &rule, true, nil
-}
-
-func GetAllRuleKeys() ([]string, bool, error) {
-	res, err := RuleClient.Keys(ctx, "*").Result()
-	if err != nil {
-		return nil, false, nil
-	}
-
-	return res, true, nil
-}
-
-func SetRule(key string, val interface{}) error {
-	err := RuleClient.JSONSet(ctx, key, ".", val).Err()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func DeleteRule(key string) error {
-	err := RuleClient.Del(ctx, key).Err()
-	if err != nil {
-		return err
-	}
-	return nil
+	return RedisRules{
+		client: client,
+	}, nil
 }
 
 func checkError(err error) {

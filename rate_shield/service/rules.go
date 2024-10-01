@@ -10,15 +10,28 @@ import (
 
 type RulesService interface {
 	GetAllRules() ([]models.Rule, error)
+	GetRule(key string) (*models.Rule, bool, error)
 	SearchRule(searchText string) ([]models.Rule, error)
 	CreateOrUpdateRule(models.Rule) error
 	DeleteRule(endpoint string) error
 }
 
-type RulesServiceRedis struct{}
+type RulesServiceRedis struct {
+	redisClient redisClient.RedisRuleClient
+}
+
+func NewRedisRulesService(client redisClient.RedisRuleClient) RulesServiceRedis {
+	return RulesServiceRedis{
+		redisClient: client,
+	}
+}
+
+func (s RulesServiceRedis) GetRule(key string) (*models.Rule, bool, error) {
+	return s.redisClient.GetRule(key)
+}
 
 func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
-	keys, _, err := redisClient.GetAllRuleKeys()
+	keys, _, err := s.redisClient.GetAllRuleKeys()
 	if err != nil {
 		log.Err(err).Msg("unable to get all rule keys from redis")
 	}
@@ -26,7 +39,7 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 	rules := []models.Rule{}
 
 	for _, key := range keys {
-		rule, found, err := redisClient.GetRule(key)
+		rule, found, err := s.redisClient.GetRule(key)
 
 		if !found {
 			log.Error().Msgf("rule with key: %s not found", key)
@@ -44,8 +57,8 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 	return rules, nil
 }
 
-func (h RulesServiceRedis) SearchRule(searchText string) ([]models.Rule, error) {
-	rules, err := h.GetAllRules()
+func (s RulesServiceRedis) SearchRule(searchText string) ([]models.Rule, error) {
+	rules, err := s.GetAllRules()
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +74,7 @@ func (h RulesServiceRedis) SearchRule(searchText string) ([]models.Rule, error) 
 }
 
 func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
-	err := redisClient.SetRule(rule.APIEndpoint, rule)
+	err := s.redisClient.SetRule(rule.APIEndpoint, rule)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
 		return err
@@ -70,7 +83,7 @@ func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
 }
 
 func (s RulesServiceRedis) DeleteRule(endpoint string) error {
-	err := redisClient.DeleteRule(endpoint)
+	err := s.redisClient.DeleteRule(endpoint)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
 		return err

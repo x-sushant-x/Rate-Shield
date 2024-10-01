@@ -9,6 +9,7 @@ import (
 	"github.com/x-sushant-x/RateShield/api"
 	"github.com/x-sushant-x/RateShield/limiter"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
+	"github.com/x-sushant-x/RateShield/service"
 )
 
 func init() {
@@ -17,9 +18,6 @@ func init() {
 }
 
 func main() {
-
-	redisClient.Connect()
-
 	redisTokenBucket, err := redisClient.NewTokenBucketClient()
 	if err != nil {
 		log.Fatal().Err(err)
@@ -30,10 +28,16 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
+	redisRulesClient, err := redisClient.NewRulesClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket)
 	fixedWindowSvc := limiter.NewFixedWindowService(redisFixedWindow)
+	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
 
-	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc)
+	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, redisRulesSvc)
 	limiter.StartRateLimiter()
 
 	server := api.NewServer(8080)
