@@ -55,7 +55,6 @@ func (t *TokenBucketService) addTokensToBucket(key string) {
 
 func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int) (*models.Bucket, error) {
 	if err := utils.ValidateCreateBucketReq(ip, endpoint, capacity, tokenAddRate); err != nil {
-		log.Info().Msg("validation failed")
 		return nil, err
 	}
 
@@ -71,16 +70,13 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 
 	err := t.saveBucket(b)
 	if err != nil {
-		log.Info().Msgf("error while saving bucket: %v", err)
 		return nil, err
 	}
 
-	log.Info().Msgf("bucket saved successfully")
 	return b, nil
 }
 
 func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule *models.Rule) (*models.Bucket, error) {
-	log.Info().Msgf("Rule: %v", *rule)
 	b, err := t.createBucket(ip, endpoint, int(rule.TokenBucketRule.BucketCapacity), int(rule.TokenBucketRule.TokenAddRate))
 	if err != nil {
 		return nil, err
@@ -133,10 +129,8 @@ func (t *TokenBucketService) processRequest(key string, rule *models.Rule) *mode
 	}
 
 	if !found {
-		log.Info().Msg("bucket not found spawing one")
 		b, err := t.spawnNewBucket(key, rule)
 		if err != nil {
-			log.Info().Msg("got error while spawning")
 			return utils.BuildRateLimitErrorResponse(500)
 		}
 		bucket = b
