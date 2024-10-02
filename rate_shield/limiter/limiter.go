@@ -21,8 +21,9 @@ type Limiter struct {
 
 func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService, redisRuleSvc service.RulesService) Limiter {
 	return Limiter{
-		tokenBucket: tokenBucket,
-		fixedWindow: fixedWindow,
+		tokenBucket:  tokenBucket,
+		fixedWindow:  fixedWindow,
+		redisRuleSvc: redisRuleSvc,
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 
 var (
 	totalRequests  = 100000
-	maxConcurrency = 100
+	maxConcurrency = 1000
 
 	successResponse         = 0
 	tooManyRequestsResponse = 0
@@ -50,7 +50,7 @@ func main() {
 			}
 
 			req.Header.Add("ip", ip.String())
-			req.Header.Add("endpoint", "/api/v1/signup")
+			req.Header.Add("endpoint", "/api/v1/send-otp")
 
 			res, _ := http.DefaultClient.Do(req)
 			if res.StatusCode == 200 {
