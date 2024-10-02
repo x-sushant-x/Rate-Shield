@@ -21,7 +21,7 @@ interface Props {
 const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, endpoint, httpMethod, token_bucket_rule, fixed_window_counter_rule, allow_on_error }) => {
     const [apiEndpoint, setApiEndpoint] = useState(endpoint || '');
     const [limitStrategy, setLimitStrategy] = useState(strategy);
-    const [method, setHttpMethod] = useState(httpMethod || '');
+    const [method, setHttpMethod] = useState(httpMethod || 'GET');
     const [tokenBucket, setTokenBucketRule] = useState(token_bucket_rule)
     const [fixedWindowCounter, setFixedWindowCounterRule] = useState(fixed_window_counter_rule)
     const [allowOnError, setAllowOnError] = useState(allow_on_error || false)
@@ -35,6 +35,68 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, e
             fixed_window_counter_rule: fixedWindowCounter,
             token_bucket_rule: tokenBucket,
             allow_on_error: allowOnError
+        }
+
+        console.log('New Rule: ', newRule)
+
+        if(newRule.endpoint === '' || newRule.endpoint === undefined) {
+            toast.error("API Endpoint can't be null.", {
+                style: customToastStyle
+            })
+            return
+        }
+
+        if(newRule.strategy === '' || newRule.strategy == undefined || newRule.strategy === "UNDEFINED") {
+            toast.error("API limit strategy can't be null.", {
+                style: customToastStyle
+            })
+            return
+        }
+
+        if(newRule.http_method === '' || newRule.http_method === undefined) {
+            toast.error("API HTTP Method can't be null.", {
+                style: customToastStyle
+            })
+            return
+        }
+
+        if(newRule.strategy == 'TOKEN BUCKET') {
+            if(newRule.token_bucket_rule?.bucket_capacity === 0 || !newRule.token_bucket_rule?.bucket_capacity || newRule.token_bucket_rule.bucket_capacity <= 0) {
+                toast.error("Invalid value for bucket capacity.", {
+                    style: customToastStyle
+                })
+                return
+            }    
+
+            if(newRule.token_bucket_rule?.token_add_rate === 0 || !newRule.token_bucket_rule?.token_add_rate || newRule.token_bucket_rule.token_add_rate <= 0) {
+                toast.error("Invalid value for bucket capacity.", {
+                    style: customToastStyle
+                })
+                return
+            }   
+            
+            if(newRule.token_bucket_rule?.token_add_rate > newRule.token_bucket_rule.bucket_capacity) {
+                toast.error("Token add rate should not be more than bucket capacity.", {
+                    style: customToastStyle
+                })
+                return
+            }
+        }
+
+        if(newRule.strategy == 'FIXED WINDOW COUNTER') {
+            if(newRule.fixed_window_counter_rule?.max_requests === 0 || !newRule.fixed_window_counter_rule?.max_requests || newRule.fixed_window_counter_rule?.max_requests <= 0) {
+                toast.error("Invalid value for maximum requests.", {
+                    style: customToastStyle
+                })
+                return
+            }    
+
+            if(newRule.fixed_window_counter_rule?.window === 0 || !newRule.fixed_window_counter_rule?.window || newRule.fixed_window_counter_rule?.window <= 0) {
+                toast.error("Invalid value for window time.", {
+                    style: customToastStyle
+                })
+                return
+            }   
         }
 
         try {
