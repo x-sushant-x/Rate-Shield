@@ -1,7 +1,6 @@
 package limiter
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -123,16 +122,6 @@ func (fw *FixedWindowService) spawnNewFixedWindow(ip, endpoint string, rule *mod
 
 func (fw *FixedWindowService) save(key string, fixedWindow *models.FixedWindowCounter) error {
 	return fw.redisClient.JSONSet(key, fixedWindow)
-}
-
-func unmarshalFixedWindow(data []byte) (*models.FixedWindowCounter, error) {
-	fixedWindow := models.FixedWindowCounter{}
-
-	if err := json.Unmarshal(data, &fixedWindow); err != nil {
-		log.Error().Err(err).Msg("Error unmarshalling fixed window data")
-		return &fixedWindow, err
-	}
-	return &fixedWindow, nil
 }
 
 func (fw *FixedWindowService) parseToKey(ip, endpoint string) string {

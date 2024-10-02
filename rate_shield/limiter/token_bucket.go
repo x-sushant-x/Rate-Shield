@@ -38,7 +38,6 @@ func (t *TokenBucketService) addTokensToBucket(key string) {
 
 	if !found {
 		// Notify on slack
-		log.Error().Err(err).Msg("Error fetching bucket with given key")
 		return
 	}
 
