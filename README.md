@@ -64,10 +64,6 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 - **Current Limitation:**  
   At present, RateShield only supports the Token Bucket & Fixed Window Counter algorithm, which may not fit all use cases.
-  
-- **Under Development:**  
-  RateShield is still in progress and should not be used in production environments just yet. Stay tuned for the official v1.0 release!
-
 
 ---
 
