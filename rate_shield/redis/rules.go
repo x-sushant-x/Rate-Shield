@@ -39,7 +39,7 @@ func (r RedisRules) GetRule(key string) (*models.Rule, bool, error) {
 	var rule models.Rule
 	err = json.Unmarshal([]byte(res), &rule)
 	if err != nil {
-		return nil, false, nil
+		return nil, false, err
 	}
 
 	return &rule, true, nil

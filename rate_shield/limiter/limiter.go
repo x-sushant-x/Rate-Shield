@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -41,9 +42,9 @@ func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 	}
 
 	if err != nil {
-		log.Err(err).Msg("unable to check limit")
+		log.Err(err).Msg("error while getting rule for api endpoint: " + endpoint)
 		// Notify on slack
-		return utils.BuildRateLimitSuccessResponse(0, 0)
+		return utils.BuildRateLimitErrorResponse(http.StatusInternalServerError)
 	}
 
 	return utils.BuildRateLimitSuccessResponse(0, 0)
