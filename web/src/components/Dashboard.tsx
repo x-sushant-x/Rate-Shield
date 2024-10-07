@@ -8,7 +8,7 @@ const Dashboard: React.FC = () => {
     const [selectedPage, setSelectedPage] = useState('API_CONFIGURATION')
 
     return (
-        <div className="w-full h-full flex-col lg:flex-row bg-global-bg">
+        <div className="w-screen h-screen overflow-x-hidden flex flex-col lg:flex-row bg-global-bg">
             <div className="hidden lg:block">
             <Sidebar onSelectPage={setSelectedPage} />   
             </div>

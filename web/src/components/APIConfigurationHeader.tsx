@@ -12,7 +12,7 @@ const APIConfigurationHeader: React.FC<Props> = ({ openAddOrUpdateRuleDialog, se
     const [searchedText, setSearchedText] = useState('')
 
     return (
-        <div className="px-8 py-8 flex justify-between">
+        <div className="p-8 flex justify-between">
             <p className="text-[1.375rem] font-poppins font-medium text-slate-900">APIs Configurations</p>
 
             <div className="flex space-x-4">
