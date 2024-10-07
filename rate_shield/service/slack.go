@@ -14,17 +14,25 @@ type SlackMessage struct {
 	Text    string `json:"text"`
 }
 
-// SendSlackMessage sends a message to a Slack channel
-func SendSlackMessage(message, channel string) error {
-	// Get the Slack OAuth token from environment variable
-	slackToken := os.Getenv("SLACK_TOKEN")
-	if slackToken == "" {
-		return fmt.Errorf("slack token is not set")
-	}
+// SlackService is a struct that holds the Slack token and other configurations
+type SlackService struct {
+	Token   string
+	Channel string
+}
 
+// NewSlackService is a constructor function to create a new SlackService instance
+func NewSlackService(token, channel string) *SlackService {
+	return &SlackService{
+		Token:   token,
+		Channel: channel,
+	}
+}
+
+// SendSlackMessage sends a message to the configured Slack channel
+func (s *SlackService) SendSlackMessage(message string) error {
 	// Create the message payload
 	slackMessage := SlackMessage{
-		Channel: channel,
+		Channel: s.Channel,
 		Text:    message,
 	}
 
@@ -42,7 +50,7 @@ func SendSlackMessage(message, channel string) error {
 
 	// Set the required headers
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+slackToken)
+	req.Header.Set("Authorization", "Bearer "+s.Token)
 
 	// Send the request
 	client := &http.Client{}
