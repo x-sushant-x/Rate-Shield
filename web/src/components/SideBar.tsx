@@ -11,7 +11,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onSelectPage }) => {
     return (
-        <div className="w-64 h-screen bg-sidebar-bg text-gray-300">
+        <div className="w-full h-screen bg-sidebar-bg text-gray-300">
             <div className="p-6">
                 <img src={logo} />
             </div>
