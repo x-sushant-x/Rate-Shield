@@ -33,7 +33,7 @@ const Footer: React.FC<SidebarProps> = ({ onSelectPage })=> {
                     <img src={githubIcon} />
                 </div>
             </div>
-            <div className='flex items-center my-5 text-gray-500 font-bold justify-center text-sm'>
+            <div className='flex items-center my-3 text-gray-500 font-bold justify-center text-sm'>
                 Created for fun by Sushant
             </div>
         </footer>
