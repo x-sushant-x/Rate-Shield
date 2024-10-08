@@ -1,9 +1,14 @@
+/*
+	Important - This strategy is not ready to be used by Rate Shield yet. Please ignore this if you are using Rate Shield as library.
+*/
+
 package limiter
 
 import (
-	"fmt"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 type Request struct {
@@ -39,7 +44,7 @@ func (lb *LeakyBucket) processRequests() {
 		case <-ticker.C:
 			lb.Mutex.Lock()
 			if len(lb.Reqs) > 0 {
-				fmt.Printf("Requests Served %s", len(lb.Reqs))
+				log.Info().Msgf("Request Served: %d", len(lb.Reqs))
 				lb.Reqs = nil
 			}
 			lb.Mutex.Unlock()
