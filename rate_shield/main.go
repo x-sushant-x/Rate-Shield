@@ -4,6 +4,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/api"
@@ -12,9 +13,17 @@ import (
 	"github.com/x-sushant-x/RateShield/service"
 )
 
+var (
+	slackToken     string
+	slackChannelID string
+)
+
 func init() {
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.RFC3339})
 	zerolog.SetGlobalLevel(zerolog.DebugLevel)
+
+	loadENVFile()
+	setSlackCredentials()
 }
 
 func main() {
@@ -33,10 +42,7 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
-	// TODO -> Utilize this service later.
-	// TODO -> Add slackToken and channel in env.
-	_ = service.NewSlackService("slackToken", "channel")
-
+	_ = service.NewSlackService(slackToken, slackChannelID)
 	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket)
 	fixedWindowSvc := limiter.NewFixedWindowService(redisFixedWindow)
 	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
@@ -48,4 +54,25 @@ func main() {
 	log.Fatal().Err(server.StartServer())
 
 	select {}
+}
+
+func loadENVFile() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Panic().Msgf("error while loading env file: %s", err)
+	}
+}
+
+func setSlackCredentials() {
+	sToken := os.Getenv("SLACK_TOKEN")
+	if len(sToken) == 0 {
+		log.Panic().Msg("SLACK_TOKEN not available in env file")
+	}
+	slackToken = sToken
+
+	sChannel := os.Getenv("SLACK_CHANNEL")
+	if len(sChannel) == 0 {
+		log.Panic().Msg("SLACK_CHANNEL not available in env file")
+	}
+	slackChannelID = sChannel
 }

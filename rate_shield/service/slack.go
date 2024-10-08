@@ -2,24 +2,22 @@ package service
 
 import (
 	"bytes"
-	"encoding/json"
-	"fmt"
 	"net/http"
+
+	"github.com/rs/zerolog/log"
+	"github.com/x-sushant-x/RateShield/models"
+	"github.com/x-sushant-x/RateShield/utils"
 )
 
-// SlackMessage represents the structure of the message payload
-type SlackMessage struct {
-	Channel string `json:"channel"`
-	Text    string `json:"text"`
-}
+const (
+	SLACK_SEND_MESSAGE_ENDPOINT = "https://slack.com/api/chat.postMessage"
+)
 
-// SlackService is a struct that holds the Slack token and other configurations
 type SlackService struct {
 	Token   string
 	Channel string
 }
 
-// NewSlackService is a constructor function to create a new SlackService instance
 func NewSlackService(token, channel string) *SlackService {
 	return &SlackService{
 		Token:   token,
@@ -27,41 +25,51 @@ func NewSlackService(token, channel string) *SlackService {
 	}
 }
 
-// SendSlackMessage sends a message to the configured Slack channel
-func (s *SlackService) SendSlackMessage(message string) error {
-	// Create the message payload
-	slackMessage := SlackMessage{
-		Channel: s.Channel,
-		Text:    message,
-	}
+func (s *SlackService) SendSlackMessage(msg string) error {
+	message := buildSlackMessageObject(s.Channel, msg)
 
-	// Marshal the message to JSON
-	messageBytes, err := json.Marshal(slackMessage)
+	messageBytes, err := utils.MarshalJSON(message)
 	if err != nil {
-		return fmt.Errorf("error marshaling message: %w", err)
+		return err
 	}
 
-	// Create a POST request to the Slack API
-	req, err := http.NewRequest("POST", "https://slack.com/api/chat.postMessage", bytes.NewBuffer(messageBytes))
+	req, err := http.NewRequest(http.MethodPost, SLACK_SEND_MESSAGE_ENDPOINT, bytes.NewBuffer(messageBytes))
 	if err != nil {
-		return fmt.Errorf("error creating request: %w", err)
+		log.Err(err).Msgf("error creating request: %s", err)
+		return err
+	}
+	s.setRequestHeaders(req)
+
+	return s.sendRequestToSlackAPI(req)
+}
+
+func buildSlackMessageObject(channel, msg string) models.SlackMessage {
+	message := models.SlackMessage{
+		Channel: channel,
+		Text:    msg,
 	}
 
-	// Set the required headers
+	return message
+}
+
+func (s *SlackService) setRequestHeaders(req *http.Request) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+s.Token)
+}
 
-	// Send the request
+func (s *SlackService) sendRequestToSlackAPI(req *http.Request) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("error sending request: %w", err)
+		log.Err(err).Msgf("error sending request: %s", err)
+		return err
 	}
+
 	defer resp.Body.Close()
 
-	// Check the response from Slack
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("received non-OK response from Slack: %s", resp.Status)
+		log.Err(err).Msgf("received non-OK response from Slack: %s", resp.Status)
+		return err
 	}
 
 	return nil
