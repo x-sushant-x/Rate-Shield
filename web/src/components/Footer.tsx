@@ -9,6 +9,7 @@ interface SidebarProps {
 }
 
 const Footer: React.FC<SidebarProps> = ({ onSelectPage })=> {
+
   return (
        <footer className="w-full flex-row items-center justify-center bg-sidebar-bg text-gray-300 rounded-tl-2xl rounded-tr-2xl">
             <div className='flex flex-row justify-between mx-10 pt-7 items-center'>
@@ -32,8 +33,8 @@ const Footer: React.FC<SidebarProps> = ({ onSelectPage })=> {
                     <img src={githubIcon} />
                 </div>
             </div>
-            <div className='flex items-center p-4 justify-center text-sm'>
-                Created for fun by  <b>  Sushant</b>
+            <div className='flex items-center my-4 text-gray-500 font-bold justify-center text-sm'>
+                Created for fun by Sushant
             </div>
         </footer>
   )

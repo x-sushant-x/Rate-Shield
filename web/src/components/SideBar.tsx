@@ -11,7 +11,7 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ onSelectPage }) => {
     return (
-        <div className="w-64 h-screen bg-sidebar-bg text-gray-300 rounded-xl ">
+        <div className="w-64 h-screen bg-sidebar-bg text-gray-300">
             <div className="p-6">
                 <img src={logo} />
             </div>
@@ -45,11 +45,10 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectPage }) => {
                     <img src={githubIcon} />
                     <li className="ml-4 hover:bg-gray-700 text-sm">Follow on GitHub</li>
                 </div>
+                <div className='flex px-4 mt-24 font-bold text-gray-500 text-center'>
+                    Created by ~ Sushant Dhiman for Fun!
+                </div>
             </ul>
-
-            <div className='text-sm ml-6 mt-[40rem]'>
-                Created for fun by <b>Sushant</b>
-            </div>
         </div>
     );
 };
