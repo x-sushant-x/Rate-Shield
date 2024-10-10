@@ -147,3 +147,103 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.AssertExpectations(t)
 	})
 }
+
+func TestSpawnNewFixedWindow(t *testing.T) {
+	mockRedis := new(MockRedisFixedWindowClient)
+	service := NewFixedWindowService(mockRedis)
+
+	t.Run("Successful new window creation", func(t *testing.T) {
+		mockRedis.ExpectedCalls = nil
+		mockRedis.Calls = nil
+
+		// Mock the JSONSet operation
+		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
+
+		// Mock the Expire operation
+		mockRedis.On("Expire", mock.Anything, mock.Anything).Return(nil)
+
+		rule := &models.Rule{
+			FixedWindowCounterRule: &models.FixedWindowCounterRule{
+				MaxRequests: 10,
+				Window:      60,
+			},
+		}
+
+		fixedWindow, err := service.spawnNewFixedWindow("192.168.1.6", "/test", rule)
+
+		// Assert that no error occurred
+		assert.NoError(t, err)
+
+		// Assert that the fixedWindow is not nil
+		assert.NotNil(t, fixedWindow)
+
+		// Assert the properties of the created fixedWindow
+		assert.Equal(t, "/test", fixedWindow.Endpoint)
+		assert.Equal(t, "192.168.1.6", fixedWindow.ClientIP)
+		assert.Equal(t, int64(10), fixedWindow.MaxRequests)
+		assert.Equal(t, int64(1), fixedWindow.CurrRequests)
+		assert.Equal(t, 60, fixedWindow.Window)
+
+		// Assert that the mock expectations were met
+		mockRedis.AssertExpectations(t)
+	})
+
+	t.Run("Redis JSONSet error", func(t *testing.T) {
+		mockRedis.ExpectedCalls = nil
+		mockRedis.Calls = nil
+
+		// Mock the JSONSet operation to return an error
+		expectedError := errors.New("Redis JSONSet error")
+		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(expectedError)
+
+		rule := &models.Rule{
+			FixedWindowCounterRule: &models.FixedWindowCounterRule{
+				MaxRequests: 10,
+				Window:      60,
+			},
+		}
+
+		fixedWindow, err := service.spawnNewFixedWindow("192.168.1.7", "/test", rule)
+
+		// Assert that an error occurred
+		assert.Error(t, err)
+		assert.Nil(t, fixedWindow)
+
+		// Check if the error is exactly what we expect
+		assert.Equal(t, expectedError, err)
+
+		// Assert that the mock expectations were met
+		mockRedis.AssertExpectations(t)
+	})
+
+	t.Run("Redis Expire error", func(t *testing.T) {
+		mockRedis.ExpectedCalls = nil
+		mockRedis.Calls = nil
+
+		// Mock the JSONSet operation to succeed
+		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
+
+		// Mock the Expire operation to fail
+		expectedError := errors.New("Redis Expire error")
+		mockRedis.On("Expire", mock.Anything, mock.Anything).Return(expectedError)
+
+		rule := &models.Rule{
+			FixedWindowCounterRule: &models.FixedWindowCounterRule{
+				MaxRequests: 10,
+				Window:      60,
+			},
+		}
+
+		fixedWindow, err := service.spawnNewFixedWindow("192.168.1.8", "/test", rule)
+
+		// Assert that an error occurred
+		assert.Error(t, err)
+		assert.Nil(t, fixedWindow)
+
+		// Check if the error is exactly what we expect
+		assert.Equal(t, expectedError, err)
+
+		// Assert that the mock expectations were met
+		mockRedis.AssertExpectations(t)
+	})
+}
