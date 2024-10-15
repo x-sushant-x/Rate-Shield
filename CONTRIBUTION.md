@@ -31,8 +31,17 @@ Follow these steps to set up and run the project locally:
    ```
    sudo docker-compose up
    ```
+4. **Setup `.env` file**
+    
+   In folder `rate_shield` create a file named `.env` and add following content to it. You do not need to change these values if you are not working with something related to slack notification. Just copy and paste these 2 lines and it will work fine.
 
-4. Run the Golang Application
+
+   ```
+   SLACK_TOKEN=<Replace With Your Slack Token>
+   SLACK_CHANNEL=<Replace With Your Slack Channel ID>
+   ```
+   
+5. Run the Golang Application
 
    Open a new terminal window, navigate to the directory containing your `main.go` file, and run:
 
@@ -40,7 +49,7 @@ Follow these steps to set up and run the project locally:
    go run main.go
    ```
 
-5. Start the Frontend
+6. Start the Frontend
 
    Open another terminal window, navigate to the frontend directory, and run:
 
@@ -48,6 +57,6 @@ Follow these steps to set up and run the project locally:
    npm run dev
    ```
 
-6. Access Application
+7. Access Application
 
    Open browser and go to `http://localhost:5173/`
