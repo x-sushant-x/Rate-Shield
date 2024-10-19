@@ -10,21 +10,24 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
+	"github.com/x-sushant-x/RateShield/service"
 	"github.com/x-sushant-x/RateShield/utils"
 )
 
 const (
 	BucketExpireTime    = time.Second * 60
-	DefaultTokenAddTime = 60
+	DefaultTokenAddTime = 20
 )
 
 type TokenBucketService struct {
-	redisClient redisClient.RedisTokenBucketClient
+	redisClient          redisClient.RedisTokenBucketClient
+	errorNotificationSVC service.ErrorNotificationSVC
 }
 
-func NewTokenBucketService(client redisClient.RedisTokenBucketClient) TokenBucketService {
+func NewTokenBucketService(client redisClient.RedisTokenBucketClient, errorNotificationSVC service.ErrorNotificationSVC) TokenBucketService {
 	return TokenBucketService{
-		redisClient: client,
+		redisClient:          client,
+		errorNotificationSVC: errorNotificationSVC,
 	}
 }
 

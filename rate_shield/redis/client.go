@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/rs/zerolog/log"
 )
 
 var (
@@ -59,10 +58,4 @@ func NewRulesClient() (RedisRules, error) {
 	return RedisRules{
 		client: client,
 	}, nil
-}
-
-func checkError(err error) {
-	if err != nil {
-		log.Fatal().Err(err).Msg("unable to connect to redis")
-	}
 }

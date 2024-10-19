@@ -42,9 +42,14 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
-	_ = service.NewSlackService(slackToken, slackChannelID)
-	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket)
+	slackSvc := service.NewSlackService(slackToken, slackChannelID)
+
+	errorNotificationSvc := service.NewErrorNotificationSVC(*slackSvc)
+
+	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket, errorNotificationSvc)
+
 	fixedWindowSvc := limiter.NewFixedWindowService(redisFixedWindow)
+
 	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, redisRulesSvc)

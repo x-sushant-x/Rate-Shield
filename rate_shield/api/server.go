@@ -1,13 +1,24 @@
+/*
+	This file needs a lot of revamping. Dependencies are getting out of hand.
+*/
+
 package api
 
 import (
 	"fmt"
 	"net/http"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/limiter"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 	"github.com/x-sushant-x/RateShield/service"
+)
+
+var (
+	slackToken     string
+	slackChannelID string
 )
 
 type Server struct {
@@ -77,7 +88,7 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
 
-	tokenBucketSvc := limiter.NewTokenBucketService(getRedisTokenBucket())
+	tokenBucketSvc := limiter.NewTokenBucketService(getRedisTokenBucket(), getErrorNotificationSvc())
 	fixedWindowSvc := limiter.NewFixedWindowService(getRedisFixedWindowClient())
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, getRedisRulesSvc())
@@ -108,4 +119,34 @@ func getRedisRulesSvc() service.RulesServiceRedis {
 		log.Fatal().Err(err)
 	}
 	return service.NewRedisRulesService(redisRulesClient)
+}
+
+func getErrorNotificationSvc() service.ErrorNotificationSVC {
+	loadENVFile()
+	setSlackCredentials()
+
+	slackSvc := service.NewSlackService(slackToken, slackChannelID)
+
+	return service.NewErrorNotificationSVC(*slackSvc)
+}
+
+func loadENVFile() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Panic().Msgf("error while loading env file: %s", err)
+	}
+}
+
+func setSlackCredentials() {
+	sToken := os.Getenv("SLACK_TOKEN")
+	if len(sToken) == 0 {
+		log.Panic().Msg("SLACK_TOKEN not available in env file")
+	}
+	slackToken = sToken
+
+	sChannel := os.Getenv("SLACK_CHANNEL")
+	if len(sChannel) == 0 {
+		log.Panic().Msg("SLACK_CHANNEL not available in env file")
+	}
+	slackChannelID = sChannel
 }
