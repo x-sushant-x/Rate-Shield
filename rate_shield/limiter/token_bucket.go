@@ -2,6 +2,7 @@ package limiter
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -34,13 +35,11 @@ func NewTokenBucketService(client redisClient.RedisTokenBucketClient, errorNotif
 func (t *TokenBucketService) addTokensToBucket(key string) {
 	bucket, found, err := t.getBucket(key)
 	if err != nil {
-		// Notify on slack
-		log.Error().Err(err).Msg("Error fetching bucket")
+		t.sendGetBucketErrorNotification(key, err)
 		return
 	}
 
 	if !found {
-		// Notify on slack
 		return
 	}
 
@@ -49,8 +48,7 @@ func (t *TokenBucketService) addTokensToBucket(key string) {
 		bucket.AvailableTokens += min(bucket.TokenAddRate, tokensToAdd)
 
 		if err := t.redisClient.JSONSet(key, bucket); err != nil {
-			// Notify on slack
-			log.Error().Err(err).Msg("Error saving updated bucket to Redis")
+			t.sendSetBucketErrorNotification(key, bucket, err)
 		}
 	}
 }
@@ -186,4 +184,16 @@ func (t *TokenBucketService) startAddTokenJob() {
 	}
 
 	s.Start()
+}
+
+func (t *TokenBucketService) sendGetBucketErrorNotification(key string, err error) {
+	customError := fmt.Sprintf("Unable to get bucket with key: %s got error: %s", key, err.Error())
+	t.errorNotificationSVC.SendErrorNotification(customError, time.Now(), "Nil", "Nil", models.Rule{})
+	log.Error().Err(err).Msg("Error fetching bucket")
+}
+
+func (t *TokenBucketService) sendSetBucketErrorNotification(key string, bucket *models.Bucket, err error) {
+	customError := fmt.Sprintf("Unable save bucket with key: %s and data: %+v got error: %s", key, bucket, err.Error())
+	t.errorNotificationSVC.SendErrorNotification(customError, time.Now(), "Nil", "Nil", models.Rule{})
+	log.Error().Err(err).Msg("Error saving updated bucket to Redis")
 }

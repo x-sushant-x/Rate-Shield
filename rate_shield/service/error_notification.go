@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/x-sushant-x/RateShield/models"
@@ -19,20 +20,21 @@ func NewErrorNotificationSVC(slackService SlackService) ErrorNotificationSVC {
 	}
 }
 
-func (e *ErrorNotificationSVC) SendErrorNotification(systemError string, timestamp time.Time, ip string, endpoint string) {
-	if !e.CanSendNotification(ip, endpoint) {
+func (e *ErrorNotificationSVC) SendErrorNotification(systemError string, timestamp time.Time, ip string, endpoint string, rule models.Rule) {
+	if !e.canSendNotification(ip, endpoint) {
 		return
 	}
 
-	notification := models.ErrorNotification{}
-	notification = notification.CreateErrorNotificationObject(systemError, timestamp, ip, endpoint)
+	ruleString, _ := utils.MarshalJSON(rule)
 
-	e.SendNotification(notification)
+	notificationString := fmt.Sprintf("Error: %s,\n IP: %s,\n Endpoint: %s,\n Rule: %s,\n Timestamp: %s", systemError, ip, endpoint, ruleString, timestamp)
+
+	e.sendNotification(notificationString)
 	e.notificationHistory[ip+":"+endpoint] = time.Now()
 
 }
 
-func (e *ErrorNotificationSVC) CanSendNotification(ip, endpoint string) bool {
+func (e *ErrorNotificationSVC) canSendNotification(ip, endpoint string) bool {
 	key := ip + ":" + endpoint
 
 	lastNotifiedTime, ok := e.notificationHistory[key]
@@ -41,10 +43,9 @@ func (e *ErrorNotificationSVC) CanSendNotification(ip, endpoint string) bool {
 	}
 
 	sinceTime := time.Since(lastNotifiedTime)
-	return sinceTime.Minutes() >= 5
+	return sinceTime.Seconds() >= 30
 }
 
-func (e *ErrorNotificationSVC) SendNotification(notification models.ErrorNotification) {
-	b, _ := utils.MarshalJSON(notification)
-	e.slackSVC.SendSlackMessage(string(b))
+func (e *ErrorNotificationSVC) sendNotification(notification string) {
+	e.slackSVC.SendSlackMessage(notification)
 }

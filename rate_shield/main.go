@@ -58,7 +58,6 @@ func main() {
 	server := api.NewServer(8080)
 	log.Fatal().Err(server.StartServer())
 
-	select {}
 }
 
 func loadENVFile() {

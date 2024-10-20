@@ -15,9 +15,10 @@ const (
 )
 
 type Limiter struct {
-	tokenBucket  *TokenBucketService
-	fixedWindow  *FixedWindowService
-	redisRuleSvc service.RulesService
+	tokenBucket          *TokenBucketService
+	fixedWindow          *FixedWindowService
+	redisRuleSvc         service.RulesService
+	errorNotificationSvc *service.ErrorNotificationSVC
 }
 
 func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService, redisRuleSvc service.RulesService) Limiter {
@@ -43,7 +44,7 @@ func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 
 	if err != nil {
 		log.Err(err).Msg("error while getting rule for api endpoint: " + endpoint)
-		// Notify on slack
+		l.errorNotificationSvc.SendErrorNotification(err.Error(), time.Now(), ip, endpoint, *rule)
 		return utils.BuildRateLimitErrorResponse(http.StatusInternalServerError)
 	}
 
