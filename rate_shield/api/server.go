@@ -7,27 +7,22 @@ package api
 import (
 	"fmt"
 	"net/http"
-	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/limiter"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 	"github.com/x-sushant-x/RateShield/service"
 )
 
-var (
-	slackToken     string
-	slackChannelID string
-)
-
 type Server struct {
-	port int
+	port    int
+	limiter limiter.Limiter
 }
 
-func NewServer(port int) Server {
+func NewServer(port int, limiter limiter.Limiter) Server {
 	return Server{
-		port: port,
+		port:    port,
+		limiter: limiter,
 	}
 }
 
@@ -87,66 +82,7 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 }
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
-
-	tokenBucketSvc := limiter.NewTokenBucketService(getRedisTokenBucket(), getErrorNotificationSvc())
-	fixedWindowSvc := limiter.NewFixedWindowService(getRedisFixedWindowClient())
-
-	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, getRedisRulesSvc())
-	rateLimiterHandler := NewRateLimitHandler(limiter)
+	rateLimiterHandler := NewRateLimitHandler(s.limiter)
 
 	mux.HandleFunc("/check-limit", rateLimiterHandler.CheckRateLimit)
-}
-
-func getRedisTokenBucket() redisClient.RedisTokenBucket {
-	redisTokenBucket, err := redisClient.NewTokenBucketClient()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-	return redisTokenBucket
-}
-
-func getRedisFixedWindowClient() redisClient.RedisFixedWindow {
-	redisFixedWindow, err := redisClient.NewFixedWindowClient()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-	return redisFixedWindow
-}
-
-func getRedisRulesSvc() service.RulesServiceRedis {
-	redisRulesClient, err := redisClient.NewRulesClient()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-	return service.NewRedisRulesService(redisRulesClient)
-}
-
-func getErrorNotificationSvc() service.ErrorNotificationSVC {
-	loadENVFile()
-	setSlackCredentials()
-
-	slackSvc := service.NewSlackService(slackToken, slackChannelID)
-
-	return service.NewErrorNotificationSVC(*slackSvc)
-}
-
-func loadENVFile() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Panic().Msgf("error while loading env file: %s", err)
-	}
-}
-
-func setSlackCredentials() {
-	sToken := os.Getenv("SLACK_TOKEN")
-	if len(sToken) == 0 {
-		log.Panic().Msg("SLACK_TOKEN not available in env file")
-	}
-	slackToken = sToken
-
-	sChannel := os.Getenv("SLACK_CHANNEL")
-	if len(sChannel) == 0 {
-		log.Panic().Msg("SLACK_CHANNEL not available in env file")
-	}
-	slackChannelID = sChannel
 }

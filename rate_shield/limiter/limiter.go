@@ -42,6 +42,10 @@ func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 		}
 	}
 
+	if !found {
+		return utils.BuildRateLimitSuccessResponse(0, 0)
+	}
+
 	if err != nil {
 		log.Err(err).Msg("error while getting rule for api endpoint: " + endpoint)
 		l.errorNotificationSvc.SendErrorNotification(err.Error(), time.Now(), ip, endpoint, *rule)

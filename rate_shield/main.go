@@ -55,7 +55,7 @@ func main() {
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, redisRulesSvc)
 	limiter.StartRateLimiter()
 
-	server := api.NewServer(8080)
+	server := api.NewServer(8080, limiter)
 	log.Fatal().Err(server.StartServer())
 
 }

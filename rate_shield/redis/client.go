@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/x-sushant-x/RateShield/utils"
 )
 
 var (
@@ -50,7 +51,16 @@ func NewFixedWindowClient() (RedisFixedWindow, error) {
 }
 
 func NewRulesClient() (RedisRules, error) {
-	client, err := createNewRedisConnection("redis:6379", 0)
+	env := utils.GetApplicationEnviroment()
+	redisConnStr := ""
+
+	if env == "prod" {
+		redisConnStr = "redis:6379"
+	} else {
+		redisConnStr = "localhost:6379"
+	}
+
+	client, err := createNewRedisConnection(redisConnStr, 0)
 	if err != nil {
 		return RedisRules{}, err
 	}
