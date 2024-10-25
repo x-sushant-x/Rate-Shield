@@ -67,6 +67,12 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 ---
 
+#### v2 Roadmap
+- [ ] Cache rules locally for better performance.
+- [ ] Goroutine pool to increase rate litiming efficiency and performance.
+- [ ] Slack integration.
+ 
+
 #### 🤝 **Contributing**
 
 Interested in contributing? We'd love your help! Check out our [Contribution Guidelines](https://github.com/x-sushant-x/Rate-Shield/blob/main/CONTRIBUTION.md) to get started.
