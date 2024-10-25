@@ -1,7 +1,3 @@
-/*
-	This file needs a lot of revamping. Dependencies are getting out of hand.
-*/
-
 package api
 
 import (

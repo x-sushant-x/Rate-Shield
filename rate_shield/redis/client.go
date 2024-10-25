@@ -27,7 +27,7 @@ func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
 }
 
 func NewTokenBucketClient() (RedisTokenBucket, error) {
-	client, err := createNewRedisConnection("redis:6379", 1)
+	client, err := createNewRedisConnection(getRedisConnectionStr(), 1)
 	if err != nil {
 		return RedisTokenBucket{}, err
 	}
@@ -40,7 +40,7 @@ func NewTokenBucketClient() (RedisTokenBucket, error) {
 }
 
 func NewFixedWindowClient() (RedisFixedWindow, error) {
-	client, err := createNewRedisConnection("redis:6379", 2)
+	client, err := createNewRedisConnection(getRedisConnectionStr(), 2)
 	if err != nil {
 		return RedisFixedWindow{}, err
 	}
@@ -51,6 +51,18 @@ func NewFixedWindowClient() (RedisFixedWindow, error) {
 }
 
 func NewRulesClient() (RedisRules, error) {
+
+	client, err := createNewRedisConnection(getRedisConnectionStr(), 0)
+	if err != nil {
+		return RedisRules{}, err
+	}
+
+	return RedisRules{
+		client: client,
+	}, nil
+}
+
+func getRedisConnectionStr() string {
 	env := utils.GetApplicationEnviroment()
 	redisConnStr := ""
 
@@ -60,12 +72,5 @@ func NewRulesClient() (RedisRules, error) {
 		redisConnStr = "localhost:6379"
 	}
 
-	client, err := createNewRedisConnection(redisConnStr, 0)
-	if err != nil {
-		return RedisRules{}, err
-	}
-
-	return RedisRules{
-		client: client,
-	}, nil
+	return redisConnStr
 }
