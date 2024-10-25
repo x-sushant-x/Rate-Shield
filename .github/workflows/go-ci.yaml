@@ -1,4 +1,4 @@
-name: CI Workflow
+name: CI Workflow Backend (Golang)
 
 on:
   push:
@@ -10,7 +10,6 @@ on:
 
 jobs:
   backend:
-    name: Go CI
     runs-on: ubuntu-latest
     defaults:
       run:
