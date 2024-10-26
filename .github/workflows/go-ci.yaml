@@ -1,0 +1,36 @@
+name: CI Workflow Backend (Golang)
+
+on:
+  push:
+    paths: 
+      - rate_shield/**
+  pull_request:
+    paths: 
+      - rate_shield/**
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./server
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install Go Dependencies
+        run: go mod tidy
+        
+      - name: Run GolangCI-Lint Check
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ./server
+
+      - name: Build Go Application
+        run: go build -o app ./main.go
