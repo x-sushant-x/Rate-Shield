@@ -1,7 +1,6 @@
 package limiter
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -15,25 +14,28 @@ const (
 )
 
 type Limiter struct {
-	tokenBucket          *TokenBucketService
-	fixedWindow          *FixedWindowService
-	redisRuleSvc         service.RulesService
-	errorNotificationSvc *service.ErrorNotificationSVC
+	tokenBucket  *TokenBucketService
+	fixedWindow  *FixedWindowService
+	redisRuleSvc service.RulesService
+	cachedRules  map[string]*models.Rule
 }
 
 func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService, redisRuleSvc service.RulesService) Limiter {
+
 	return Limiter{
 		tokenBucket:  tokenBucket,
 		fixedWindow:  fixedWindow,
 		redisRuleSvc: redisRuleSvc,
+		// This is initialized later in StartRateLimiter() function
+		cachedRules: nil,
 	}
 }
 
 func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 	key := ip + ":" + endpoint
-	rule, found, err := l.GetRule(endpoint)
+	rule, found := l.cachedRules[endpoint]
 
-	if err == nil && found {
+	if found {
 		switch rule.Strategy {
 		case "TOKEN BUCKET":
 			return l.processTokenBucketReq(key, rule)
@@ -44,12 +46,6 @@ func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 
 	if !found {
 		return utils.BuildRateLimitSuccessResponse(0, 0)
-	}
-
-	if err != nil {
-		log.Err(err).Msg("error while getting rule for api endpoint: " + endpoint)
-		l.errorNotificationSvc.SendErrorNotification(err.Error(), time.Now(), ip, endpoint, *rule)
-		return utils.BuildRateLimitErrorResponse(http.StatusInternalServerError)
 	}
 
 	return utils.BuildRateLimitSuccessResponse(0, 0)
@@ -89,5 +85,22 @@ func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
 
 func (l *Limiter) StartRateLimiter() {
 	log.Info().Msg("Starting Limiter Service ✅")
+	l.cachedRules = l.cacheRulesLoally()
 	l.tokenBucket.startAddTokenJob()
+}
+
+func (l *Limiter) cacheRulesLoally() map[string]*models.Rule {
+	rules, err := l.redisRuleSvc.GetAllRules()
+	if err != nil {
+		log.Err(err).Msg("Unable to cache all rules locally")
+	}
+
+	cachedRules := make(map[string]*models.Rule)
+
+	for _, rule := range rules {
+		cachedRules[rule.APIEndpoint] = &rule
+	}
+
+	log.Info().Msg("Rules locally cached ✅")
+	return cachedRules
 }
