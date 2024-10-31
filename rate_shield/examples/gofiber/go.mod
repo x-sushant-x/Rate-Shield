@@ -1,4 +1,4 @@
-module gofiber-ex
+module gofiberapp
 
 go 1.22.5
 
