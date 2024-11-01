@@ -1,0 +1,36 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Output folders
+bin/
+build/
+
+# Dependency directories
+vendor/
+
+# GoLand project files
+.idea/
+
+# VSCode project files
+.vscode/
+
+# Logs
+*.log
+
+# Go test binaries
+*.test
+
+# Ignore .env files if any
+.env
+
+# Generated Go files
+*.gen.go
+
+# Golang package files
+go.sum
+
+# Ignore temporary files
+*~
