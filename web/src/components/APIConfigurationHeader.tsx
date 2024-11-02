@@ -34,7 +34,8 @@ const APIConfigurationHeader: React.FC<Props> = ({ openAddOrUpdateRuleDialog, se
                 </button>
 
                 <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center" onClick={() => {
-                    openAddOrUpdateRuleDialog(null)}}>
+                    openAddOrUpdateRuleDialog(null)
+                }}>
                     <span className="mr-2">+</span>
                     Add New
                 </button>
