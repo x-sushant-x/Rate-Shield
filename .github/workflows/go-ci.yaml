@@ -30,7 +30,7 @@ jobs:
       - name: Run GolangCI-Lint Check
         uses: golangci/golangci-lint-action@v6
         with:
-          working-directory: ./server
+          working-directory: ./rate_shield
 
       - name: Build Go Application
         run: go build -o app ./main.go

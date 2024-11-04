@@ -68,7 +68,7 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 ---
 
 #### v2 Roadmap
-- [ ] Cache rules locally for better performance.
+- [x] Cache rules locally for better performance.
 - [ ] Goroutine pool to increase rate litiming efficiency and performance.
 - [ ] Slack integration.
  
