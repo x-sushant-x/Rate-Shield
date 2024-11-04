@@ -17,6 +17,8 @@ type RedisRuleClient interface {
 	GetAllRuleKeys() ([]string, bool, error)
 	SetRule(key string, val interface{}) error
 	DeleteRule(key string) error
+	PublishMessage(channel, msg string) error
+	ListenToRulesUpdate(udpatesChannel chan string)
 }
 
 type RedisFixedWindowClient interface {

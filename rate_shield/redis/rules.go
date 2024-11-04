@@ -4,7 +4,12 @@ import (
 	"encoding/json"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/models"
+)
+
+const (
+	redisRuleUpdateChannel = "rules-update"
 )
 
 type RedisRules struct {
@@ -51,4 +56,25 @@ func (r RedisRules) SetRule(key string, val interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func (r RedisRules) PublishMessage(channel, msg string) error {
+	return r.client.Publish(ctx, channel, msg).Err()
+}
+
+func (r RedisRules) ListenToRulesUpdate(updatesChannel chan string) {
+	pubsub := r.client.Subscribe(ctx, redisRuleUpdateChannel)
+	defer pubsub.Close()
+
+	for {
+		msg, err := pubsub.ReceiveMessage(ctx)
+		if err != nil {
+			log.Err(err).Msg("Error while listening for rule updates")
+			continue
+		}
+
+		if msg.Channel == redisRuleUpdateChannel {
+			updatesChannel <- "UpdateRules"
+		}
+	}
 }

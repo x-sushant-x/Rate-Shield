@@ -8,12 +8,18 @@ import (
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 )
 
+const (
+	redisChannel = "rules-update"
+)
+
 type RulesService interface {
 	GetAllRules() ([]models.Rule, error)
 	GetRule(key string) (*models.Rule, bool, error)
 	SearchRule(searchText string) ([]models.Rule, error)
 	CreateOrUpdateRule(models.Rule) error
 	DeleteRule(endpoint string) error
+	CacheRulesLocally() map[string]*models.Rule
+	ListenToRulesUpdate(updatesChannel chan string)
 }
 
 type RulesServiceRedis struct {
@@ -79,7 +85,8 @@ func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
 		log.Err(err).Msg("unable to create or update rule")
 		return err
 	}
-	return nil
+
+	return s.redisClient.PublishMessage(redisChannel, "rule-updated")
 }
 
 func (s RulesServiceRedis) DeleteRule(endpoint string) error {
@@ -89,5 +96,25 @@ func (s RulesServiceRedis) DeleteRule(endpoint string) error {
 		return err
 
 	}
-	return err
+	return s.redisClient.PublishMessage(redisChannel, "rule-updated")
+}
+
+func (s RulesServiceRedis) CacheRulesLocally() map[string]*models.Rule {
+	rules, err := s.GetAllRules()
+	if err != nil {
+		log.Err(err).Msg("Unable to cache all rules locally")
+	}
+
+	cachedRules := make(map[string]*models.Rule)
+
+	for _, rule := range rules {
+		cachedRules[rule.APIEndpoint] = &rule
+	}
+
+	log.Info().Msg("Rules locally cached ✅")
+	return cachedRules
+}
+
+func (s RulesServiceRedis) ListenToRulesUpdate(updatesChannel chan string) {
+	s.redisClient.ListenToRulesUpdate(updatesChannel)
 }

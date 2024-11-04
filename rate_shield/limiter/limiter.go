@@ -85,22 +85,22 @@ func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
 
 func (l *Limiter) StartRateLimiter() {
 	log.Info().Msg("Starting Limiter Service ✅")
-	l.cachedRules = l.cacheRulesLoally()
+	l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
 	l.tokenBucket.startAddTokenJob()
+	go l.listenToRulesUpdate()
+
 }
 
-func (l *Limiter) cacheRulesLoally() map[string]*models.Rule {
-	rules, err := l.redisRuleSvc.GetAllRules()
-	if err != nil {
-		log.Err(err).Msg("Unable to cache all rules locally")
+func (l *Limiter) listenToRulesUpdate() {
+	updatesChannel := make(chan string)
+	go l.redisRuleSvc.ListenToRulesUpdate(updatesChannel)
+
+	for {
+		data := <-updatesChannel
+
+		if data == "UpdateRules" {
+			l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
+			log.Info().Msg("Rules Updated Successfully")
+		}
 	}
-
-	cachedRules := make(map[string]*models.Rule)
-
-	for _, rule := range rules {
-		cachedRules[rule.APIEndpoint] = &rule
-	}
-
-	log.Info().Msg("Rules locally cached ✅")
-	return cachedRules
 }
