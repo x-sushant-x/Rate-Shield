@@ -1,6 +1,6 @@
 import { useState } from "react"
-import ContentArea from "./ContentArea"
-import Sidebar from "./SideBar"
+import ContentArea from "../components/ContentArea"
+import Sidebar from "../components/SideBar"
 
 const Dashboard: React.FC = () => {
     const [selectedPage, setSelectedPage] = useState('API_CONFIGURATION')

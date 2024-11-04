@@ -69,7 +69,7 @@ export default function APIConfiguration() {
     }
 
     return (
-        <div className="h-screen bg-white rounded-xl shadow-lg h-full">
+        <div className="bg-white rounded-xl h-full">
             <APIConfigurationHeader openAddOrUpdateRuleDialog={openAddOrUpdateRuleDialog} setSearchRuleText={setSearchRuleText} />
 
             {
