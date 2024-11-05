@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -14,6 +15,7 @@ const (
 
 type RulesService interface {
 	GetAllRules() ([]models.Rule, error)
+	GetPaginatedRules(page, items int) ([]models.Rule, error)
 	GetRule(key string) (*models.Rule, bool, error)
 	SearchRule(searchText string) ([]models.Rule, error)
 	CreateOrUpdateRule(models.Rule) error
@@ -117,4 +119,25 @@ func (s RulesServiceRedis) CacheRulesLocally() map[string]*models.Rule {
 
 func (s RulesServiceRedis) ListenToRulesUpdate(updatesChannel chan string) {
 	s.redisClient.ListenToRulesUpdate(updatesChannel)
+}
+
+func (s RulesServiceRedis) GetPaginatedRules(page, items int) ([]models.Rule, error) {
+	allRules, err := s.GetAllRules()
+	if err != nil {
+		log.Err(err).Msgf("unable to get rules from redis")
+		return []models.Rule{}, err
+	}
+
+	start := (page - 1) * items
+	stop := start + items
+
+	if start >= len(allRules) {
+		return []models.Rule{}, errors.New("invalid page number")
+	}
+
+	if stop >= len(allRules) {
+		stop = len(allRules)
+	}
+
+	return allRules[start:stop], nil
 }

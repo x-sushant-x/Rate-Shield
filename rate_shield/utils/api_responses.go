@@ -5,10 +5,11 @@ import (
 	"net/http"
 )
 
-func InternalError(w http.ResponseWriter) {
+func InternalError(w http.ResponseWriter, message string) {
 	msg := map[string]string{
-		"status": "fail",
-		"error":  "Internal Server Error",
+		"status":  "fail",
+		"error":   "Internal Server Error",
+		"message": message,
 	}
 
 	w.WriteHeader(http.StatusInternalServerError)

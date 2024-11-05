@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/x-sushant-x/RateShield/models"
 	"github.com/x-sushant-x/RateShield/service"
@@ -19,12 +20,32 @@ func NewRulesAPIHandler(svc service.RulesService) RulesAPIHandler {
 }
 
 func (h RulesAPIHandler) ListAllRules(w http.ResponseWriter, r *http.Request) {
-	rules, err := h.rulesSvc.GetAllRules()
-	if err != nil {
-		utils.InternalError(w)
-		return
+	page := r.URL.Query().Get("page")
+	items := r.URL.Query().Get("items")
+
+	if page != "" && items != "" {
+		pageInt, pageIntErr := strconv.Atoi(page)
+		itemsInt, itemsIntErr := strconv.Atoi(items)
+
+		if pageIntErr != nil || itemsIntErr != nil {
+			utils.BadRequestError(w)
+			return
+		}
+
+		rules, err := h.rulesSvc.GetPaginatedRules(pageInt, itemsInt)
+		if err != nil {
+			utils.InternalError(w, err.Error())
+			return
+		}
+		utils.SuccessResponse(rules, w)
+	} else {
+		rules, err := h.rulesSvc.GetAllRules()
+		if err != nil {
+			utils.InternalError(w, err.Error())
+			return
+		}
+		utils.SuccessResponse(rules, w)
 	}
-	utils.SuccessResponse(rules, w)
 }
 
 func (h RulesAPIHandler) SearchRules(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +59,7 @@ func (h RulesAPIHandler) SearchRules(w http.ResponseWriter, r *http.Request) {
 
 	rules, err := h.rulesSvc.SearchRule(searchText)
 	if err != nil {
-		utils.InternalError(w)
+		utils.InternalError(w, err.Error())
 		return
 	}
 
@@ -54,7 +75,7 @@ func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Reque
 		}
 		err = h.rulesSvc.CreateOrUpdateRule(updateReq)
 		if err != nil {
-			utils.InternalError(w)
+			utils.InternalError(w, err.Error())
 			return
 		}
 
@@ -74,7 +95,7 @@ func (h RulesAPIHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 
 		err = h.rulesSvc.DeleteRule(deleteReq.RuleKey)
 		if err != nil {
-			utils.InternalError(w)
+			utils.InternalError(w, err.Error())
 			return
 		}
 
