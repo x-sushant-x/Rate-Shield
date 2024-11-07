@@ -22,3 +22,10 @@ type FixedWindowCounterRule struct {
 type DeleteRuleDTO struct {
 	RuleKey string `json:"rule_key"`
 }
+
+type PaginatedRules struct {
+	PageNumber  int    `json:"page_number"`
+	TotalItems  int    `json:"total_items"`
+	HasNextPage bool   `json:"has_next_page"`
+	Rules       []Rule `json:"rules"`
+}

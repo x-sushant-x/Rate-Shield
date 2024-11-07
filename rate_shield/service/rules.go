@@ -15,7 +15,7 @@ const (
 
 type RulesService interface {
 	GetAllRules() ([]models.Rule, error)
-	GetPaginatedRules(page, items int) ([]models.Rule, error)
+	GetPaginatedRules(page, items int) (models.PaginatedRules, error)
 	GetRule(key string) (*models.Rule, bool, error)
 	SearchRule(searchText string) ([]models.Rule, error)
 	CreateOrUpdateRule(models.Rule) error
@@ -121,23 +121,34 @@ func (s RulesServiceRedis) ListenToRulesUpdate(updatesChannel chan string) {
 	s.redisClient.ListenToRulesUpdate(updatesChannel)
 }
 
-func (s RulesServiceRedis) GetPaginatedRules(page, items int) ([]models.Rule, error) {
+func (s RulesServiceRedis) GetPaginatedRules(page, items int) (models.PaginatedRules, error) {
 	allRules, err := s.GetAllRules()
 	if err != nil {
 		log.Err(err).Msgf("unable to get rules from redis")
-		return []models.Rule{}, err
+		return models.PaginatedRules{}, err
 	}
 
 	start := (page - 1) * items
 	stop := start + items
 
 	if start >= len(allRules) {
-		return []models.Rule{}, errors.New("invalid page number")
+		return models.PaginatedRules{}, errors.New("invalid page number")
 	}
+
+	hasNextPage := stop < len(allRules)
 
 	if stop >= len(allRules) {
 		stop = len(allRules)
 	}
 
-	return allRules[start:stop], nil
+	paginatedSlice := allRules[start:stop]
+
+	rules := models.PaginatedRules{
+		PageNumber:  page,
+		TotalItems:  items,
+		HasNextPage: hasNextPage,
+		Rules:       paginatedSlice,
+	}
+
+	return rules, nil
 }
