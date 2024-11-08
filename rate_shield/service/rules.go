@@ -145,7 +145,7 @@ func (s RulesServiceRedis) GetPaginatedRules(page, items int) (models.PaginatedR
 
 	rules := models.PaginatedRules{
 		PageNumber:  page,
-		TotalItems:  items,
+		TotalItems:  stop - start,
 		HasNextPage: hasNextPage,
 		Rules:       paginatedSlice,
 	}
