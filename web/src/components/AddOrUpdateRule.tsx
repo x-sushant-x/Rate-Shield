@@ -1,31 +1,45 @@
-import { useState } from 'react';
-import toast, { Toaster } from 'react-hot-toast';
+import { useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
 
-import BackArrow from '../assets/BackArrow.png'
-import { createNewRule, deleteRule, fixedWindowCounterRule, rule, tokenBucketRule } from '../api/rules';
-import { customToastStyle } from '../utils/toast_styles';
+import BackArrow from "../assets/BackArrow.png";
+import {
+    createNewRule,
+    deleteRule,
+    fixedWindowCounterRule,
+    rule,
+    tokenBucketRule,
+} from "../api/rules";
+import { customToastStyle } from "../utils/toast_styles";
 
 interface Props {
-    closeAddNewRule: () => void
-    strategy: string
-    action: string
-    endpoint?: string
-    httpMethod?: string
-    fixed_window_counter_rule: fixedWindowCounterRule | null
-    token_bucket_rule: tokenBucketRule | null
-    allow_on_error: boolean
+    closeAddNewRule: () => void;
+    strategy: string;
+    action: string;
+    endpoint?: string;
+    httpMethod?: string;
+    fixed_window_counter_rule: fixedWindowCounterRule | null;
+    token_bucket_rule: tokenBucketRule | null;
+    allow_on_error: boolean;
 }
 
-
-
-const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, endpoint, httpMethod, token_bucket_rule, fixed_window_counter_rule, allow_on_error }) => {
-    const [apiEndpoint, setApiEndpoint] = useState(endpoint || '');
+const AddOrUpdateRule: React.FC<Props> = ({
+    closeAddNewRule,
+    action,
+    strategy,
+    endpoint,
+    httpMethod,
+    token_bucket_rule,
+    fixed_window_counter_rule,
+    allow_on_error,
+}) => {
+    const [apiEndpoint, setApiEndpoint] = useState(endpoint || "");
     const [limitStrategy, setLimitStrategy] = useState(strategy);
-    const [method, setHttpMethod] = useState(httpMethod || 'GET');
-    const [tokenBucket, setTokenBucketRule] = useState(token_bucket_rule)
-    const [fixedWindowCounter, setFixedWindowCounterRule] = useState(fixed_window_counter_rule)
-    const [allowOnError, setAllowOnError] = useState(allow_on_error || false)
-
+    const [method, setHttpMethod] = useState(httpMethod || "GET");
+    const [tokenBucket, setTokenBucketRule] = useState(token_bucket_rule);
+    const [fixedWindowCounter, setFixedWindowCounterRule] = useState(
+        fixed_window_counter_rule,
+    );
+    const [allowOnError, setAllowOnError] = useState(allow_on_error || false);
 
     const addOrUpdateRule = async () => {
         const newRule: rule = {
@@ -34,151 +48,185 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, e
             strategy: limitStrategy,
             fixed_window_counter_rule: fixedWindowCounter,
             token_bucket_rule: tokenBucket,
-            allow_on_error: allowOnError
-        }
+            allow_on_error: allowOnError,
+        };
 
-        console.log('New Rule: ', newRule)
+        console.log("New Rule: ", newRule);
 
-        if(newRule.endpoint === '' || newRule.endpoint === undefined) {
+        if (newRule.endpoint === "" || newRule.endpoint === undefined) {
             toast.error("API Endpoint can't be null.", {
-                style: customToastStyle
-            })
-            return
+                style: customToastStyle,
+            });
+            return;
         }
 
-        if(newRule.strategy === '' || newRule.strategy == undefined || newRule.strategy === "UNDEFINED") {
+        if (
+            newRule.strategy === "" ||
+            newRule.strategy == undefined ||
+            newRule.strategy === "UNDEFINED"
+        ) {
             toast.error("API limit strategy can't be null.", {
-                style: customToastStyle
-            })
-            return
+                style: customToastStyle,
+            });
+            return;
         }
 
-        if(newRule.http_method === '' || newRule.http_method === undefined) {
+        if (newRule.http_method === "" || newRule.http_method === undefined) {
             toast.error("API HTTP Method can't be null.", {
-                style: customToastStyle
-            })
-            return
+                style: customToastStyle,
+            });
+            return;
         }
 
-        if(newRule.strategy == 'TOKEN BUCKET') {
-            if(newRule.token_bucket_rule?.bucket_capacity === 0 || !newRule.token_bucket_rule?.bucket_capacity || newRule.token_bucket_rule.bucket_capacity <= 0) {
+        if (newRule.strategy == "TOKEN BUCKET") {
+            if (
+                newRule.token_bucket_rule?.bucket_capacity === 0 ||
+                !newRule.token_bucket_rule?.bucket_capacity ||
+                newRule.token_bucket_rule.bucket_capacity <= 0
+            ) {
                 toast.error("Invalid value for bucket capacity.", {
-                    style: customToastStyle
-                })
-                return
-            }    
+                    style: customToastStyle,
+                });
+                return;
+            }
 
-            if(newRule.token_bucket_rule?.token_add_rate === 0 || !newRule.token_bucket_rule?.token_add_rate || newRule.token_bucket_rule.token_add_rate <= 0) {
+            if (
+                newRule.token_bucket_rule?.token_add_rate === 0 ||
+                !newRule.token_bucket_rule?.token_add_rate ||
+                newRule.token_bucket_rule.token_add_rate <= 0
+            ) {
                 toast.error("Invalid value for bucket capacity.", {
-                    style: customToastStyle
-                })
-                return
-            }   
-            
-            if(newRule.token_bucket_rule?.token_add_rate > newRule.token_bucket_rule.bucket_capacity) {
-                toast.error("Token add rate should not be more than bucket capacity.", {
-                    style: customToastStyle
-                })
-                return
+                    style: customToastStyle,
+                });
+                return;
+            }
+
+            if (
+                newRule.token_bucket_rule?.token_add_rate >
+                newRule.token_bucket_rule.bucket_capacity
+            ) {
+                toast.error(
+                    "Token add rate should not be more than bucket capacity.",
+                    {
+                        style: customToastStyle,
+                    },
+                );
+                return;
             }
         }
 
-        if(newRule.strategy == 'FIXED WINDOW COUNTER') {
-            if(newRule.fixed_window_counter_rule?.max_requests === 0 || !newRule.fixed_window_counter_rule?.max_requests || newRule.fixed_window_counter_rule?.max_requests <= 0) {
+        if (newRule.strategy == "FIXED WINDOW COUNTER") {
+            if (
+                newRule.fixed_window_counter_rule?.max_requests === 0 ||
+                !newRule.fixed_window_counter_rule?.max_requests ||
+                newRule.fixed_window_counter_rule?.max_requests <= 0
+            ) {
                 toast.error("Invalid value for maximum requests.", {
-                    style: customToastStyle
-                })
-                return
-            }    
+                    style: customToastStyle,
+                });
+                return;
+            }
 
-            if(newRule.fixed_window_counter_rule?.window === 0 || !newRule.fixed_window_counter_rule?.window || newRule.fixed_window_counter_rule?.window <= 0) {
+            if (
+                newRule.fixed_window_counter_rule?.window === 0 ||
+                !newRule.fixed_window_counter_rule?.window ||
+                newRule.fixed_window_counter_rule?.window <= 0
+            ) {
                 toast.error("Invalid value for window time.", {
-                    style: customToastStyle
-                })
-                return
-            }   
+                    style: customToastStyle,
+                });
+                return;
+            }
         }
 
         try {
-            await createNewRule(newRule)
-            closeAddNewRule()
+            await createNewRule(newRule);
+            closeAddNewRule();
         } catch (error) {
             toast.error("Unable to save rule: " + error, {
-                style: customToastStyle
-            })
+                style: customToastStyle,
+            });
         }
-    }
+    };
 
     const handleAllowOnErrorCheckbox = () => {
-        setAllowOnError(!allowOnError)
-    }
-
-
+        setAllowOnError(!allowOnError);
+    };
 
     async function deleteExistingRule() {
         try {
-            await deleteRule(apiEndpoint)
-            closeAddNewRule()
+            await deleteRule(apiEndpoint);
+            closeAddNewRule();
         } catch (error) {
-            toast.error("Unable to add rule: " + error)
+            toast.error("Unable to add rule: " + error);
         }
     }
 
     return (
         <div className="px-8">
-            <div className='flex items-center mb-12'>
-                <img src={BackArrow} className='cursor-pointer' width={25} onClick={
-                    () => {
-                        closeAddNewRule()
-                    }
-                } />
-                <p className="text-xl ml-4">{action === "ADD" ? "Add Rule" : "Update Rule"}</p>
+            <div className="flex items-center mb-12">
+                <img
+                    src={BackArrow}
+                    className="cursor-pointer"
+                    width={25}
+                    onClick={() => {
+                        closeAddNewRule();
+                    }}
+                />
+                <p className="text-xl ml-4">
+                    {action === "ADD" ? "Add Rule" : "Update Rule"}
+                </p>
             </div>
 
-            <p className='mb-2'>API Endpoint</p>
+            <p className="mb-2">API Endpoint</p>
             <input
                 className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
                 required
                 placeholder="Ex: - /api/v1/create"
                 value={apiEndpoint}
+                readOnly={action === "UPDATE" ? true : false}
                 onChange={(e) => {
-                    setApiEndpoint(e.target.value)
+                    setApiEndpoint(e.target.value);
                 }}
             />
 
             <br></br>
 
-            {
-                action === "UPDATE" ?
-                    <div><p className='mb-2 mt-6'>Strategy</p>
+            {action === "UPDATE" ? (
+                <div>
+                    <p className="mb-2 mt-6">Strategy</p>
+                    <select className="bg-slate-200 px-4 py-2 rounded-md focus:outline-none w-auto appearance-none">
+                        <option value={limitStrategy}>{limitStrategy}</option>
+                    </select>
+                </div>
+            ) : (
+                <div>
+                    <div>
+                        <p className="mb-2 mt-6">Strategy</p>
                         <select
-                            className="bg-slate-200 px-4 py-2 rounded-md focus:outline-none w-auto appearance-none">
-                            <option value={limitStrategy}>{limitStrategy}</option>
+                            className="bg-slate-200 px-4 py-2 rounded-md focus:outline-none w-auto min-w-[50px] inline-block appearance-none"
+                            onChange={(e) => {
+                                setLimitStrategy(e.target.value);
+                            }}
+                        >
+                            <option value="">Select Limiting Strategy</option>
+                            <option value="TOKEN BUCKET">TOKEN BUCKET</option>
+                            <option value="FIXED WINDOW COUNTER">
+                                FIXED WINDOW COUNTER
+                            </option>
                         </select>
                     </div>
-                    :
-                    <div>
-                        <div><p className='mb-2 mt-6'>Strategy</p>
-                            <select
-                                className="bg-slate-200 px-4 py-2 rounded-md focus:outline-none w-auto min-w-[50px] inline-block appearance-none" onChange={(e) => {
-                                    setLimitStrategy(e.target.value)
-                                }}>
-                                <option value=''>Select Limiting Strategy</option>
-                                <option value='TOKEN BUCKET'>TOKEN BUCKET</option>
-                                <option value='FIXED WINDOW COUNTER'>FIXED WINDOW COUNTER</option>
-                            </select>
-                        </div>
-                    </div>
-            }
+                </div>
+            )}
 
-            <p className='mb-2 mt-6'>HTTP Method</p>
+            <p className="mb-2 mt-6">HTTP Method</p>
             <select
                 className="bg-slate-200 px-4 py-2 rounded-md focus:outline-none w-auto appearance-none"
                 value={method}
                 onChange={(e) => {
-                    setHttpMethod(e.target.value)
-                }}>
-
+                    setHttpMethod(e.target.value);
+                }}
+            >
                 <option value="GET">GET</option>
                 <option value="POST">POST</option>
                 <option value="DELETE">DELETE</option>
@@ -186,102 +234,110 @@ const AddOrUpdateRule: React.FC<Props> = ({ closeAddNewRule, action, strategy, e
                 <option value="PATCH">PATCH</option>
             </select>
 
+            {limitStrategy === "TOKEN BUCKET" ? (
+                <div>
+                    <p className="mb-2 mt-6">Bucket Capacity</p>
+                    <input
+                        className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
+                        placeholder="Ex: - 10000"
+                        value={tokenBucket?.bucket_capacity}
+                        onChange={(e) =>
+                            setTokenBucketRule({
+                                bucket_capacity:
+                                    Number.parseInt(e.target.value) || 0,
+                                token_add_rate:
+                                    tokenBucket?.token_add_rate || 0,
+                            })
+                        }
+                    />
 
-            {
-                limitStrategy === "TOKEN BUCKET" ?
-                    <div>
-                        <p className='mb-2 mt-6'>Bucket Capacity</p>
-                        <input
-                            className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
-                            placeholder="Ex: - 10000"
-                            value={tokenBucket?.bucket_capacity}
-                            onChange={(e) => setTokenBucketRule({
-                                bucket_capacity: Number.parseInt(e.target.value) || 0,
-                                token_add_rate: tokenBucket?.token_add_rate || 0
-                            })}
-                        />
+                    <p className="mb-2 mt-6">Token Add Rate (per minute)</p>
+                    <input
+                        className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
+                        placeholder="Ex: - 100"
+                        value={tokenBucket?.token_add_rate}
+                        onChange={(e) => {
+                            setTokenBucketRule({
+                                token_add_rate:
+                                    Number.parseInt(e.target.value) || 0,
+                                bucket_capacity:
+                                    tokenBucket?.bucket_capacity || 0,
+                            });
+                        }}
+                    />
+                </div>
+            ) : limitStrategy === "FIXED WINDOW COUNTER" ? (
+                <div>
+                    <p className="mb-2 mt-6">Maximum Requests</p>
+                    <input
+                        className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
+                        placeholder="Ex: - 10000"
+                        value={fixedWindowCounter?.max_requests}
+                        onChange={(e) => {
+                            setFixedWindowCounterRule({
+                                max_requests: Number.parseInt(e.target.value),
+                                window: fixedWindowCounter?.window || 0,
+                            });
+                        }}
+                    />
 
-                        <p className='mb-2 mt-6'>Token Add Rate (per minute)</p>
-                        <input
-                            className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
-                            placeholder="Ex: - 100"
-                            value={tokenBucket?.token_add_rate}
-                            onChange={(e) => {
-                                setTokenBucketRule({
-                                    token_add_rate: Number.parseInt(e.target.value) || 0,
-                                    bucket_capacity: tokenBucket?.bucket_capacity || 0
-                                })
-                            }}
-                        />
-                    </div>
-
-                    : limitStrategy === "FIXED WINDOW COUNTER" ?
-                        <div>
-                            <p className='mb-2 mt-6'>Maximum Requests</p>
-                            <input
-                                className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
-                                placeholder="Ex: - 10000"
-                                value={fixedWindowCounter?.max_requests}
-                                onChange={(e) => {
-                                    setFixedWindowCounterRule({
-                                        max_requests: Number.parseInt(e.target.value),
-                                        window: fixedWindowCounter?.window || 0
-                                    })
-                                }}
-                            />
-
-                            <p className='mb-2 mt-6'>Window Time (in seconds)</p>
-                            <input
-                                className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
-                                placeholder="Ex: - 100"
-                                value={fixedWindowCounter?.window}
-                                onChange={(e) => {
-                                    setFixedWindowCounterRule({
-                                        max_requests: fixedWindowCounter?.max_requests || 0,
-                                        window: Number.parseInt(e.target.value) || 0
-                                    })
-                                }}
-                            />
-                        </div>
-
-                        : <div></div>
-            }
+                    <p className="mb-2 mt-6">Window Time (in seconds)</p>
+                    <input
+                        className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-auto"
+                        placeholder="Ex: - 100"
+                        value={fixedWindowCounter?.window}
+                        onChange={(e) => {
+                            setFixedWindowCounterRule({
+                                max_requests:
+                                    fixedWindowCounter?.max_requests || 0,
+                                window: Number.parseInt(e.target.value) || 0,
+                            });
+                        }}
+                    />
+                </div>
+            ) : (
+                <div></div>
+            )}
 
             <br></br>
 
             <label className="flex items-center space-x-3">
                 <input
                     type="checkbox"
-                    checked = {allowOnError}
-                    onChange= {handleAllowOnErrorCheckbox}
+                    checked={allowOnError}
+                    onChange={handleAllowOnErrorCheckbox}
                     className="appearance-none h-4 w-4 border border-gray-700 rounded-md checked:bg-blue-600 checked:border-transparent focus:outline-none transition duration-300 ease-in-out"
                 />
                 <span className="text-gray-700">Allow on error?</span>
             </label>
 
-            <div className='flex'>
-                <button className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8" onClick={() => {
-                    addOrUpdateRule()
-                }}>
-                    {
-                        action === "ADD" ? "Add" : "Update"
-                    }
+            <div className="flex">
+                <button
+                    className="bg-sidebar-bg text-slate-200 py-2 px-4 rounded-md flex items-center mt-8"
+                    onClick={() => {
+                        addOrUpdateRule();
+                    }}
+                >
+                    {action === "ADD" ? "Add" : "Update"}
                 </button>
 
-                {
-                    action === "UPDATE" ?
-                        <button className="bg-[#bb2124] text-slate-200 py-2 px-4 rounded-md flex items-center mt-8 ml-4" onClick={() => {
-                            deleteExistingRule()
-                        }}>
-                            Delete
-                        </button> : <div></div>
-                }
+                {action === "UPDATE" ? (
+                    <button
+                        className="bg-[#bb2124] text-slate-200 py-2 px-4 rounded-md flex items-center mt-8 ml-4"
+                        onClick={() => {
+                            deleteExistingRule();
+                        }}
+                    >
+                        Delete
+                    </button>
+                ) : (
+                    <div></div>
+                )}
             </div>
 
             <Toaster position="bottom-right" reverseOrder={false} />
         </div>
-    )
-}
+    );
+};
 
-
-export default AddOrUpdateRule
+export default AddOrUpdateRule;
