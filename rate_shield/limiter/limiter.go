@@ -14,18 +14,21 @@ const (
 )
 
 type Limiter struct {
-	tokenBucket  *TokenBucketService
-	fixedWindow  *FixedWindowService
-	redisRuleSvc service.RulesService
-	cachedRules  map[string]*models.Rule
+	tokenBucket   *TokenBucketService
+	fixedWindow   *FixedWindowService
+	slidingWindow *SlidingWindowService
+	redisRuleSvc  service.RulesService
+	cachedRules   map[string]*models.Rule
 }
 
-func NewRateLimiterService(tokenBucket *TokenBucketService, fixedWindow *FixedWindowService, redisRuleSvc service.RulesService) Limiter {
+func NewRateLimiterService(
+	tokenBucket *TokenBucketService, fixedWindow *FixedWindowService, slidingWindow *SlidingWindowService, redisRuleSvc service.RulesService) Limiter {
 
 	return Limiter{
-		tokenBucket:  tokenBucket,
-		fixedWindow:  fixedWindow,
-		redisRuleSvc: redisRuleSvc,
+		tokenBucket:   tokenBucket,
+		fixedWindow:   fixedWindow,
+		redisRuleSvc:  redisRuleSvc,
+		slidingWindow: slidingWindow,
 		// This is initialized later in StartRateLimiter() function
 		cachedRules: nil,
 	}
@@ -41,6 +44,8 @@ func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 			return l.processTokenBucketReq(key, rule)
 		case "FIXED WINDOW COUNTER":
 			return l.processFixedWindowReq(ip, endpoint, rule)
+		case "SLIDING WINDOW COUNTER":
+			return l.processSlidingWindowReq(ip, endpoint, rule)
 		}
 	}
 
@@ -67,6 +72,20 @@ func (l *Limiter) processTokenBucketReq(key string, rule *models.Rule) *models.R
 
 func (l *Limiter) processFixedWindowReq(ip, endpoint string, rule *models.Rule) *models.RateLimitResponse {
 	resp := l.fixedWindow.processRequest(ip, endpoint, rule)
+
+	if resp.Success {
+		return resp
+	}
+
+	if rule.AllowOnError {
+		return utils.BuildRateLimitSuccessResponse(0, 0)
+	}
+
+	return resp
+}
+
+func (l *Limiter) processSlidingWindowReq(ip, endpoint string, rule *models.Rule) *models.RateLimitResponse {
+	resp := l.slidingWindow.processRequest(ip, endpoint, rule)
 
 	if resp.Success {
 		return resp

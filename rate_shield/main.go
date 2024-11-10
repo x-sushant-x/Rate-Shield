@@ -42,6 +42,11 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
+	redisSlidingWindowClient, err := redisClient.NewSlidingWindowClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
+
 	slackSvc := service.NewSlackService(slackToken, slackChannelID)
 
 	errorNotificationSvc := service.NewErrorNotificationSVC(*slackSvc)
@@ -52,7 +57,9 @@ func main() {
 
 	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
 
-	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, redisRulesSvc)
+	slidingWindowSvc := limiter.NewSlidingWindowService(redisSlidingWindowClient)
+
+	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
 	limiter.StartRateLimiter()
 
 	server := api.NewServer(8080, limiter)

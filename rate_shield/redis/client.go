@@ -50,6 +50,14 @@ func NewFixedWindowClient() (RedisFixedWindow, error) {
 	}, nil
 }
 
+func NewSlidingWindowClient() (*redis.Client, error) {
+	client, err := createNewRedisConnection(getRedisConnectionStr(), 3)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+
 func NewRulesClient() (RedisRules, error) {
 
 	client, err := createNewRedisConnection(getRedisConnectionStr(), 0)
