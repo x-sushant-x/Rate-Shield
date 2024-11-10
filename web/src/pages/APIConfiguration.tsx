@@ -68,6 +68,7 @@ export default function APIConfiguration() {
     const closeAddNewRuleDialog = () => {
         setIsAddRuleDialogOpen(false);
         setSelectedRule(null);
+        window.location.reload();
     };
 
     return (

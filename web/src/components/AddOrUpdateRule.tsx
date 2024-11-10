@@ -214,6 +214,7 @@ const AddOrUpdateRule: React.FC<Props> = ({
                             <option value="FIXED WINDOW COUNTER">
                                 FIXED WINDOW COUNTER
                             </option>
+                            <option value="SLIDING WINDOW COUNTER">SLIDING WINDOW COUNTER</option>
                         </select>
                     </div>
                 </div>

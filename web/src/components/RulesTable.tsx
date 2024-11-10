@@ -23,7 +23,7 @@ const RulesTable: React.FC<Props> = ({
             <table className="table-auto w-full text-left">
                 <thead>
                     <tr>
-                        <th className="text-left" style={{ width: "63%" }}>
+                        <th className="text-left" style={{ width: "55%" }}>
                             Endpoint
                         </th>{" "}
                         {/* Left aligned */}
@@ -31,7 +31,7 @@ const RulesTable: React.FC<Props> = ({
                             Method
                         </th>{" "}
                         {/* Center aligned */}
-                        <th className="text-center" style={{ width: "10%" }}>
+                        <th className="text-center" style={{ width: "20%" }}>
                             Strategy
                         </th>{" "}
                         {/* Center aligned */}

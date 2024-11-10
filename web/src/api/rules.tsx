@@ -62,7 +62,7 @@ export async function getAllRules(): Promise<rule[]> {
 export async function getPaginatedRules(
     pageNumber: number,
 ): Promise<paginatedRulesResponse> {
-    const url = `${baseUrl}/rule/list?page=${pageNumber}&items=2`;
+    const url = `${baseUrl}/rule/list?page=${pageNumber}&items=10`;
 
     try {
         const response = await fetch(url, {
