@@ -30,6 +30,24 @@ func (s *SlidingWindowService) processRequest(ip, endpoint string, rule *models.
 	now := time.Now().Unix()
 	windowSize := time.Duration(rule.SlidingWindowCounterRule.WindowSize) * time.Second
 
+	count, err := s.removeOldRequestsAndCountActiveRequests(key, now, windowSize)
+	if err != nil {
+		return utils.BuildRateLimitErrorResponse(500)
+	}
+
+	if count > rule.SlidingWindowCounterRule.MaxRequests {
+		return utils.BuildRateLimitErrorResponse(429)
+	}
+
+	err = s.updateWindow(key, now, windowSize)
+	if err != nil {
+		return utils.BuildRateLimitErrorResponse(500)
+	}
+
+	return utils.BuildRateLimitSuccessResponse(rule.SlidingWindowCounterRule.MaxRequests, rule.SlidingWindowCounterRule.MaxRequests-count)
+}
+
+func (s *SlidingWindowService) removeOldRequestsAndCountActiveRequests(key string, now int64, windowSize time.Duration) (int64, error) {
 	then := fmt.Sprintf("%d", now-int64(windowSize.Seconds()))
 
 	pipe := s.redisClient.TxPipeline()
@@ -39,19 +57,18 @@ func (s *SlidingWindowService) processRequest(ip, endpoint string, rule *models.
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return utils.BuildRateLimitErrorResponse(500)
+		return -1, err
 	}
 
 	count, err := countCmd.Result()
 	if err != nil {
-		return utils.BuildRateLimitErrorResponse(500)
+		return -1, err
 	}
+	return count, nil
+}
 
-	if count > rule.SlidingWindowCounterRule.MaxRequests {
-		return utils.BuildRateLimitErrorResponse(429)
-	}
-
-	pipe = s.redisClient.TxPipeline()
+func (s *SlidingWindowService) updateWindow(key string, now int64, windowSize time.Duration) error {
+	pipe := s.redisClient.TxPipeline()
 
 	pipe.ZAdd(ctx, key, redis.Z{
 		Member: now,
@@ -60,10 +77,10 @@ func (s *SlidingWindowService) processRequest(ip, endpoint string, rule *models.
 
 	pipe.Expire(ctx, key, windowSize)
 
-	_, err = pipe.Exec(ctx)
+	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return utils.BuildRateLimitErrorResponse(500)
+		return err
 	}
 
-	return utils.BuildRateLimitSuccessResponse(rule.SlidingWindowCounterRule.MaxRequests, rule.SlidingWindowCounterRule.MaxRequests-count)
+	return nil
 }
