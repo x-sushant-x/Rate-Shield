@@ -7,9 +7,11 @@ import {
     deleteRule,
     fixedWindowCounterRule,
     rule,
+    slidingWindowCounterRule,
     tokenBucketRule,
 } from "../api/rules";
 import { customToastStyle } from "../utils/toast_styles";
+import { validateNewFixedWindowCounterRule, validateNewRule, validateNewSlidingWindowCounterRule, validateNewTokenBucketRule } from "../utils/validators";
 
 interface Props {
     closeAddNewRule: () => void;
@@ -19,6 +21,7 @@ interface Props {
     httpMethod?: string;
     fixed_window_counter_rule: fixedWindowCounterRule | null;
     token_bucket_rule: tokenBucketRule | null;
+    sliding_window_counter_rule: slidingWindowCounterRule | null;
     allow_on_error: boolean;
 }
 
@@ -30,15 +33,15 @@ const AddOrUpdateRule: React.FC<Props> = ({
     httpMethod,
     token_bucket_rule,
     fixed_window_counter_rule,
+    sliding_window_counter_rule,
     allow_on_error,
 }) => {
     const [apiEndpoint, setApiEndpoint] = useState(endpoint || "");
     const [limitStrategy, setLimitStrategy] = useState(strategy);
     const [method, setHttpMethod] = useState(httpMethod || "GET");
     const [tokenBucket, setTokenBucketRule] = useState(token_bucket_rule);
-    const [fixedWindowCounter, setFixedWindowCounterRule] = useState(
-        fixed_window_counter_rule,
-    );
+    const [fixedWindowCounter, setFixedWindowCounterRule] = useState(fixed_window_counter_rule);
+    const [slidingWindowCounter, setSlidingWindowCounterRule] = useState(sliding_window_counter_rule)
     const [allowOnError, setAllowOnError] = useState(allow_on_error || false);
 
     const addOrUpdateRule = async () => {
@@ -48,95 +51,29 @@ const AddOrUpdateRule: React.FC<Props> = ({
             strategy: limitStrategy,
             fixed_window_counter_rule: fixedWindowCounter,
             token_bucket_rule: tokenBucket,
+            sliding_window_counter_rule: slidingWindowCounter,
             allow_on_error: allowOnError,
         };
+        
 
-        console.log("New Rule: ", newRule);
-
-        if (newRule.endpoint === "" || newRule.endpoint === undefined) {
-            toast.error("API Endpoint can't be null.", {
-                style: customToastStyle,
-            });
+        if(!validateNewRule(newRule)) {
+            console.log("validateNewRule")
             return;
         }
 
-        if (
-            newRule.strategy === "" ||
-            newRule.strategy == undefined ||
-            newRule.strategy === "UNDEFINED"
-        ) {
-            toast.error("API limit strategy can't be null.", {
-                style: customToastStyle,
-            });
+        if(!validateNewTokenBucketRule(newRule)) {
+            console.log("validateNewTokenBucketRule")
             return;
         }
 
-        if (newRule.http_method === "" || newRule.http_method === undefined) {
-            toast.error("API HTTP Method can't be null.", {
-                style: customToastStyle,
-            });
+        if(!validateNewFixedWindowCounterRule(newRule)) {
+            console.log("validateNewFixedWindowCounterRule")
             return;
         }
-
-        if (newRule.strategy == "TOKEN BUCKET") {
-            if (
-                newRule.token_bucket_rule?.bucket_capacity === 0 ||
-                !newRule.token_bucket_rule?.bucket_capacity ||
-                newRule.token_bucket_rule.bucket_capacity <= 0
-            ) {
-                toast.error("Invalid value for bucket capacity.", {
-                    style: customToastStyle,
-                });
-                return;
-            }
-
-            if (
-                newRule.token_bucket_rule?.token_add_rate === 0 ||
-                !newRule.token_bucket_rule?.token_add_rate ||
-                newRule.token_bucket_rule.token_add_rate <= 0
-            ) {
-                toast.error("Invalid value for bucket capacity.", {
-                    style: customToastStyle,
-                });
-                return;
-            }
-
-            if (
-                newRule.token_bucket_rule?.token_add_rate >
-                newRule.token_bucket_rule.bucket_capacity
-            ) {
-                toast.error(
-                    "Token add rate should not be more than bucket capacity.",
-                    {
-                        style: customToastStyle,
-                    },
-                );
-                return;
-            }
-        }
-
-        if (newRule.strategy == "FIXED WINDOW COUNTER") {
-            if (
-                newRule.fixed_window_counter_rule?.max_requests === 0 ||
-                !newRule.fixed_window_counter_rule?.max_requests ||
-                newRule.fixed_window_counter_rule?.max_requests <= 0
-            ) {
-                toast.error("Invalid value for maximum requests.", {
-                    style: customToastStyle,
-                });
-                return;
-            }
-
-            if (
-                newRule.fixed_window_counter_rule?.window === 0 ||
-                !newRule.fixed_window_counter_rule?.window ||
-                newRule.fixed_window_counter_rule?.window <= 0
-            ) {
-                toast.error("Invalid value for window time.", {
-                    style: customToastStyle,
-                });
-                return;
-            }
+        
+        if(!validateNewSlidingWindowCounterRule(newRule)) {
+            console.log("validateNewSlidingWindowCounterRule")
+            return;
         }
 
         try {
@@ -267,7 +204,7 @@ const AddOrUpdateRule: React.FC<Props> = ({
                         }}
                     />
                 </div>
-            ) : limitStrategy === "FIXED WINDOW COUNTER" ? (
+            ) : limitStrategy === "FIXED WINDOW COUNTER" || limitStrategy === "SLIDING WINDOW COUNTER" ? (
                 <div>
                     <p className="mb-2 mt-6">Maximum Requests</p>
                     <input
@@ -275,10 +212,17 @@ const AddOrUpdateRule: React.FC<Props> = ({
                         placeholder="Ex: - 10000"
                         value={fixedWindowCounter?.max_requests}
                         onChange={(e) => {
-                            setFixedWindowCounterRule({
-                                max_requests: Number.parseInt(e.target.value),
-                                window: fixedWindowCounter?.window || 0,
-                            });
+                            if(limitStrategy === "FIXED WINDOW COUNTER") {
+                                setFixedWindowCounterRule({
+                                    max_requests: Number.parseInt(e.target.value),
+                                    window: fixedWindowCounter?.window || 0,
+                                });
+                            } else if(limitStrategy === "SLIDING WINDOW COUNTER") {
+                                setSlidingWindowCounterRule({
+                                    max_requests: Number.parseInt(e.target.value),
+                                    window: fixedWindowCounter?.window || 0,
+                                });
+                            }
                         }}
                     />
 
@@ -288,11 +232,19 @@ const AddOrUpdateRule: React.FC<Props> = ({
                         placeholder="Ex: - 100"
                         value={fixedWindowCounter?.window}
                         onChange={(e) => {
-                            setFixedWindowCounterRule({
-                                max_requests:
-                                    fixedWindowCounter?.max_requests || 0,
-                                window: Number.parseInt(e.target.value) || 0,
-                            });
+                            if(limitStrategy === "FIXED WINDOW COUNTER") {
+                                setFixedWindowCounterRule({
+                                    max_requests:
+                                        fixedWindowCounter?.max_requests || 0,
+                                    window: Number.parseInt(e.target.value) || 0,
+                                });
+                            } else if(limitStrategy === "SLIDING WINDOW COUNTER") {
+                                setSlidingWindowCounterRule({
+                                    max_requests:
+                                        fixedWindowCounter?.max_requests || 0,
+                                    window: Number.parseInt(e.target.value) || 0,
+                                });
+                            }
                         }}
                     />
                 </div>

@@ -3,6 +3,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/limiter"
@@ -23,11 +24,12 @@ func NewServer(port int, limiter limiter.Limiter) Server {
 }
 
 func (s Server) StartServer() error {
-	log.Info().Msg("Setting Up API Endpoints ✅")
+	log.Info().Msg("Setting Up API endpoints ✅")
 	mux := http.NewServeMux()
 
 	s.rulesRoutes(mux)
 	s.registerRateLimiterRoutes(mux)
+	s.setupHome(mux)
 
 	corsMux := s.setupCORS(mux)
 
@@ -36,7 +38,7 @@ func (s Server) StartServer() error {
 		Handler: corsMux,
 	}
 
-	log.Info().Msg("Rate Shield Running ✅")
+	log.Info().Msg("Rate Shield running on port: " + fmt.Sprintf("%d", s.port) + " ✅")
 
 	err := server.ListenAndServe()
 	if err != nil {
@@ -79,6 +81,21 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {
 	rateLimiterHandler := NewRateLimitHandler(s.limiter)
-
 	mux.HandleFunc("/check-limit", rateLimiterHandler.CheckRateLimit)
+}
+
+func (s Server) setupHome(mux *http.ServeMux) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+
+		wd, wdError := os.Getwd()
+
+		homepage, err := os.ReadFile(wd + "/api/" + "index.html")
+		if err != nil || wdError != nil {
+			fmt.Println(err)
+			w.Write([]byte("Rate Shield is running. Open frontend client on port 5173. If it does not work make sure react application is running."))
+		}
+
+		fmt.Fprint(w, string(homepage))
+	})
 }

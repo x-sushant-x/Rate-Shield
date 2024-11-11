@@ -5,6 +5,7 @@ export interface rule {
     endpoint: string;
     http_method: string;
     fixed_window_counter_rule: fixedWindowCounterRule | null;
+    sliding_window_counter_rule: slidingWindowCounterRule | null;
     token_bucket_rule: tokenBucketRule | null;
     allow_on_error: boolean;
 }
@@ -26,6 +27,12 @@ export interface fixedWindowCounterRule {
     max_requests: number;
     window: number;
 }
+
+export interface slidingWindowCounterRule {
+    max_requests: number;
+    window: number;
+}
+
 
 export interface tokenBucketRule {
     bucket_capacity: number;

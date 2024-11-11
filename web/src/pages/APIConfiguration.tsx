@@ -33,7 +33,6 @@ export default function APIConfiguration() {
 
     useEffect(() => {
         fetchRules();
-        console.log("Page Number: " + pageNumber);
     }, [pageNumber]);
 
     useEffect(() => {
@@ -88,6 +87,7 @@ export default function APIConfiguration() {
                     fixed_window_counter_rule={
                         selectedRule?.fixed_window_counter_rule || null
                     }
+                    sliding_window_counter_rule={selectedRule?.sliding_window_counter_rule || null}
                     token_bucket_rule={selectedRule?.token_bucket_rule || null}
                     allow_on_error={selectedRule?.allow_on_error || false}
                 />
