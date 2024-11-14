@@ -27,52 +27,25 @@ func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
 	return conn, nil
 }
 
-func NewRedisRateLimitClient() (RedisRateLimiterClient, error) {
+func NewRedisRateLimitClient() (RedisRateLimiterClient, *redis.ClusterClient, error) {
 	client := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: []string{
-			"127.0.0.1:6380",
-			"127.0.0.1:6381",
-			"127.0.0.1:6382",
-			"127.0.0.1:6383",
-			"127.0.0.1:6384",
-			"127.0.0.1:6385",
-		},
+		Addrs: utils.GetRedisClusterURLs(),
 	})
 
 	result, err := client.Ping(ctx).Result()
 
 	if err != nil || result == "" {
-		log.Info().Msg("Error: " + err.Error() + " & Ping Result: " + result)
-		return RedisRateLimit{}, err
+		log.Fatal().Err(err).Msg("unable to connect to redis or ping result is nil")
 	}
 
 	TokenBucketClient = client
 
 	return RedisRateLimit{
 		client: client,
-	}, nil
+	}, client, nil
 }
 
-// func NewFixedWindowClient() (RedisFixedWindow, error) {
-// 	client, err := createNewRedisConnection(getRedisConnectionStr(), 2)
-// 	if err != nil {
-// 		return RedisFixedWindow{}, err
-// 	}
-
-// 	return RedisFixedWindow{
-// 		client: client,
-// 	}, nil
-// }
-
-// func NewSlidingWindowClient() (*redis.Client, error) {
-// 	client, err := createNewRedisConnection(getRedisConnectionStr(), 3)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return client, nil
-// }
-
-func NewRulesClient() (RedisRules, error) {
+func NewRulesClient() (RedisRuleClient, error) {
 	env := getApplicationEnv()
 	port := getRedisRulesInstancePort()
 
@@ -80,7 +53,7 @@ func NewRulesClient() (RedisRules, error) {
 
 	client, err := createNewRedisConnection(connectionString, 0)
 	if err != nil {
-		return RedisRules{}, err
+		log.Fatal().Err(err).Msg("unable to connect to redis rules instance on port: " + port)
 	}
 
 	return RedisRules{

@@ -82,7 +82,9 @@ export async function getPaginatedRules(
 
         const data: paginatedRulesResponse = await response.json();
 
-        console.log("Paginated Rules Response: " + data.data.rules);
+        if(data.data.rules.length === 0) {
+            throw new Error("No rules found. Start by creatign one.")
+        }
 
         return data;
     } catch (error) {

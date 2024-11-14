@@ -15,10 +15,10 @@ var (
 )
 
 type SlidingWindowService struct {
-	redisClient *redis.Client
+	redisClient *redis.ClusterClient
 }
 
-func NewSlidingWindowService(redisClient *redis.Client) SlidingWindowService {
+func NewSlidingWindowService(redisClient *redis.ClusterClient) SlidingWindowService {
 	return SlidingWindowService{
 		redisClient: redisClient,
 	}

@@ -18,12 +18,12 @@ export default function APIConfiguration() {
             const rules = await getPaginatedRules(pageNumber);
             setRulesData(rules.data.rules);
             setHasNextPage(rules.data.has_next_page);
-
+            
             errorShown.current = false;
         } catch (error) {
             console.error("Failed to fetch rules:", error);
             if (errorShown.current === false) {
-                toast.error("Error: " + error, {
+                toast.error(`${error}`, {
                     style: customToastStyle,
                 });
                 errorShown.current = true;

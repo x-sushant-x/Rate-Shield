@@ -128,6 +128,15 @@ func (s RulesServiceRedis) GetPaginatedRules(page, items int) (models.PaginatedR
 		return models.PaginatedRules{}, err
 	}
 
+	if len(allRules) == 0 {
+		return models.PaginatedRules{
+			PageNumber:  1,
+			TotalItems:  0,
+			HasNextPage: false,
+			Rules:       make([]models.Rule, 0),
+		}, nil
+	}
+
 	start := (page - 1) * items
 	stop := start + items
 
