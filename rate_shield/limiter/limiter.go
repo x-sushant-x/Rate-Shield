@@ -105,6 +105,7 @@ func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
 func (l *Limiter) StartRateLimiter() {
 	log.Info().Msg("Starting limiter service ✅")
 	l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
+	log.Info().Msgf("Total Rules: %d", len(l.cachedRules))
 	l.tokenBucket.startAddTokenJob()
 	go l.listenToRulesUpdate()
 

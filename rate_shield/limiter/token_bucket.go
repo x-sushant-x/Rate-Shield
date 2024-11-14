@@ -16,16 +16,15 @@ import (
 )
 
 const (
-	BucketExpireTime    = time.Second * 60
-	DefaultTokenAddTime = 20
+	BucketExpireTime = time.Second * 60
 )
 
 type TokenBucketService struct {
-	redisClient          redisClient.RedisTokenBucketClient
+	redisClient          redisClient.RedisRateLimiterClient
 	errorNotificationSVC service.ErrorNotificationSVC
 }
 
-func NewTokenBucketService(client redisClient.RedisTokenBucketClient, errorNotificationSVC service.ErrorNotificationSVC) TokenBucketService {
+func NewTokenBucketService(client redisClient.RedisRateLimiterClient, errorNotificationSVC service.ErrorNotificationSVC) TokenBucketService {
 	return TokenBucketService{
 		redisClient:          client,
 		errorNotificationSVC: errorNotificationSVC,
@@ -65,7 +64,6 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 		AvailableTokens: capacity,
 		Endpoint:        endpoint,
 		TokenAddRate:    tokenAddRate,
-		TokenAddTime:    DefaultTokenAddTime,
 	}
 
 	err := t.saveBucket(b)
@@ -95,6 +93,7 @@ func (t *TokenBucketService) spawnNewBucket(key string, rule *models.Rule) (*mod
 }
 
 func (t *TokenBucketService) getBucket(key string) (*models.Bucket, bool, error) {
+	key = "token_bucket_" + key
 	data, found, err := t.redisClient.JSONGet(key)
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching bucket from Redis")
@@ -105,7 +104,12 @@ func (t *TokenBucketService) getBucket(key string) (*models.Bucket, bool, error)
 		return nil, false, nil
 	}
 
-	return data, true, nil
+	tokenBucket, err := utils.Unmarshal[models.Bucket]([]byte(data))
+	if err != nil {
+		log.Err(err).Msg(err.Error())
+	}
+
+	return &tokenBucket, true, nil
 }
 
 func (t *TokenBucketService) addTokens() {
@@ -155,7 +159,7 @@ func (t *TokenBucketService) processRequest(key string, rule *models.Rule) *mode
 }
 
 func (t *TokenBucketService) saveBucket(bucket *models.Bucket) error {
-	key := bucket.ClientIP + ":" + bucket.Endpoint
+	key := "token_bucket_" + bucket.ClientIP + ":" + bucket.Endpoint
 	if err := t.redisClient.JSONSet(key, bucket); err != nil {
 		log.Error().Err(err).Msg("Error saving new bucket to Redis")
 		return err

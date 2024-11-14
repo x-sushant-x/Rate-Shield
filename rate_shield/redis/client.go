@@ -4,12 +4,13 @@ import (
 	"context"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/utils"
 )
 
 var (
-	TokenBucketClient *redis.Client
 	ctx               = context.Background()
+	TokenBucketClient *redis.ClusterClient
 )
 
 func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
@@ -26,41 +27,58 @@ func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
 	return conn, nil
 }
 
-func NewTokenBucketClient() (RedisTokenBucket, error) {
-	client, err := createNewRedisConnection(getRedisConnectionStr(), 1)
-	if err != nil {
-		return RedisTokenBucket{}, err
+func NewRedisRateLimitClient() (RedisRateLimiterClient, error) {
+	client := redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: []string{
+			"127.0.0.1:6380",
+			"127.0.0.1:6381",
+			"127.0.0.1:6382",
+			"127.0.0.1:6383",
+			"127.0.0.1:6384",
+			"127.0.0.1:6385",
+		},
+	})
+
+	result, err := client.Ping(ctx).Result()
+
+	if err != nil || result == "" {
+		log.Info().Msg("Error: " + err.Error() + " & Ping Result: " + result)
+		return RedisRateLimit{}, err
 	}
 
 	TokenBucketClient = client
 
-	return RedisTokenBucket{
+	return RedisRateLimit{
 		client: client,
 	}, nil
 }
 
-func NewFixedWindowClient() (RedisFixedWindow, error) {
-	client, err := createNewRedisConnection(getRedisConnectionStr(), 2)
-	if err != nil {
-		return RedisFixedWindow{}, err
-	}
+// func NewFixedWindowClient() (RedisFixedWindow, error) {
+// 	client, err := createNewRedisConnection(getRedisConnectionStr(), 2)
+// 	if err != nil {
+// 		return RedisFixedWindow{}, err
+// 	}
 
-	return RedisFixedWindow{
-		client: client,
-	}, nil
-}
+// 	return RedisFixedWindow{
+// 		client: client,
+// 	}, nil
+// }
 
-func NewSlidingWindowClient() (*redis.Client, error) {
-	client, err := createNewRedisConnection(getRedisConnectionStr(), 3)
-	if err != nil {
-		return nil, err
-	}
-	return client, nil
-}
+// func NewSlidingWindowClient() (*redis.Client, error) {
+// 	client, err := createNewRedisConnection(getRedisConnectionStr(), 3)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return client, nil
+// }
 
 func NewRulesClient() (RedisRules, error) {
+	env := getApplicationEnv()
+	port := getRedisRulesInstancePort()
 
-	client, err := createNewRedisConnection(getRedisConnectionStr(), 0)
+	connectionString := env + port
+
+	client, err := createNewRedisConnection(connectionString, 0)
 	if err != nil {
 		return RedisRules{}, err
 	}
@@ -70,15 +88,19 @@ func NewRulesClient() (RedisRules, error) {
 	}, nil
 }
 
-func getRedisConnectionStr() string {
+func getApplicationEnv() string {
 	env := utils.GetApplicationEnviroment()
 	redisConnStr := ""
 
 	if env == "prod" {
-		redisConnStr = "redis:6379"
+		redisConnStr = "redis:"
 	} else {
-		redisConnStr = "localhost:6379"
+		redisConnStr = "localhost:"
 	}
 
 	return redisConnStr
+}
+
+func getRedisRulesInstancePort() string {
+	return utils.GetRedisRulesInstancePort()
 }

@@ -5,7 +5,7 @@ class RateLimiterLoadTest(TaskSet):
     @task
     def checkLoad(self):
         ip = f"192.168.{random.randint(0, 255)}.{random.randint(0, 255)}"
-        endpoint = "/api/v1/test"
+        endpoint = "/api/v1/send-otp"
         headers = {
             "ip" : ip,
             "endpoint" : endpoint,

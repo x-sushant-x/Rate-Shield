@@ -2,6 +2,7 @@ package limiter
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,9 +15,10 @@ type MockRedisFixedWindowClient struct {
 	mock.Mock
 }
 
-func (m *MockRedisFixedWindowClient) JSONGet(key string) (*models.FixedWindowCounter, bool, error) {
+func (m *MockRedisFixedWindowClient) JSONGet(key string) (string, bool, error) {
 	args := m.Called(key)
-	return args.Get(0).(*models.FixedWindowCounter), args.Bool(1), args.Error(2)
+
+	return fmt.Sprintf("%s", args.Get(0)), args.Bool(1), args.Error(2)
 }
 
 func (m *MockRedisFixedWindowClient) JSONSet(key string, value interface{}) error {

@@ -27,22 +27,7 @@ func init() {
 }
 
 func main() {
-	redisTokenBucket, err := redisClient.NewTokenBucketClient()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	redisFixedWindow, err := redisClient.NewFixedWindowClient()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
 	redisRulesClient, err := redisClient.NewRulesClient()
-	if err != nil {
-		log.Fatal().Err(err)
-	}
-
-	redisSlidingWindowClient, err := redisClient.NewSlidingWindowClient()
 	if err != nil {
 		log.Fatal().Err(err)
 	}
@@ -51,13 +36,18 @@ func main() {
 
 	errorNotificationSvc := service.NewErrorNotificationSVC(*slackSvc)
 
-	tokenBucketSvc := limiter.NewTokenBucketService(redisTokenBucket, errorNotificationSvc)
+	redisRateLimiter, err := redisClient.NewRedisRateLimitClient()
+	if err != nil {
+		log.Fatal().Err(err)
+	}
 
-	fixedWindowSvc := limiter.NewFixedWindowService(redisFixedWindow)
+	tokenBucketSvc := limiter.NewTokenBucketService(redisRateLimiter, errorNotificationSvc)
+
+	fixedWindowSvc := limiter.NewFixedWindowService(redisRateLimiter)
 
 	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
 
-	slidingWindowSvc := limiter.NewSlidingWindowService(redisSlidingWindowClient)
+	slidingWindowSvc := limiter.NewSlidingWindowService(nil)
 
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
 	limiter.StartRateLimiter()

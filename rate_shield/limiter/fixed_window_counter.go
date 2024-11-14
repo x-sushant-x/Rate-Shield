@@ -10,10 +10,10 @@ import (
 )
 
 type FixedWindowService struct {
-	redisClient redisClient.RedisFixedWindowClient
+	redisClient redisClient.RedisRateLimiterClient
 }
 
-func NewFixedWindowService(client redisClient.RedisFixedWindowClient) FixedWindowService {
+func NewFixedWindowService(client redisClient.RedisRateLimiterClient) FixedWindowService {
 	return FixedWindowService{
 		redisClient: client,
 	}
@@ -85,7 +85,7 @@ func (fw *FixedWindowService) ResetWindow(key string, currTime int64, fixedWindo
 }
 
 func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.FixedWindowCounter, bool, error) {
-	fixedWindow, found, err := fw.redisClient.JSONGet(key)
+	fixedWindowFromRedis, found, err := fw.redisClient.JSONGet(key)
 
 	if err != nil {
 		log.Error().Err(err).Msg("Error fetching fixed window from Redis")
@@ -96,7 +96,12 @@ func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.Fixed
 		return nil, false, nil
 	}
 
-	return fixedWindow, true, nil
+	fixedWindow, err := utils.Unmarshal[models.FixedWindowCounter]([]byte(fixedWindowFromRedis))
+	if err != nil {
+		log.Err(err).Msg(err.Error())
+	}
+
+	return &fixedWindow, true, nil
 }
 
 func (fw *FixedWindowService) makeFixedWindowCounter(ip, endpoint string, rule *models.Rule) models.FixedWindowCounter {
@@ -133,5 +138,5 @@ func (fw *FixedWindowService) save(key string, fixedWindow *models.FixedWindowCo
 }
 
 func (fw *FixedWindowService) parseToKey(ip, endpoint string) string {
-	return ip + ":" + endpoint
+	return "fixed_window_" + ip + ":" + endpoint
 }

@@ -4,7 +4,6 @@ type Bucket struct {
 	Endpoint        string `json:"endpoint"`
 	Capacity        int    `json:"capacity"`
 	TokenAddRate    int    `json:"token_add_rate"`
-	TokenAddTime    int    `json:"token_add_time"`
 	ClientIP        string `json:"client_ip"`
 	CreatedAt       int64  `json:"created_at"`
 	AvailableTokens int    `json:"available_tokens"`

@@ -77,7 +77,7 @@ export function validateNewFixedWindowCounterRule(newRule: rule) {
             !newRule.fixed_window_counter_rule?.max_requests ||
             newRule.fixed_window_counter_rule?.max_requests <= 0
         ) {
-            toast.error("Invalid value for maximum requests.", {
+            toast.error(`Invalid value for maximum requests: ${newRule.fixed_window_counter_rule?.max_requests}`, {
                 style: customToastStyle,
             });
             return false;
@@ -98,7 +98,7 @@ export function validateNewFixedWindowCounterRule(newRule: rule) {
 }
 
 export function validateNewSlidingWindowCounterRule(newRule: rule) {
-    if (newRule.strategy === "FIXED WINDOW COUNTER") {
+    if (newRule.strategy === "SLIDING WINDOW COUNTER") {
         if (
             newRule.sliding_window_counter_rule?.max_requests === 0 ||
             !newRule.sliding_window_counter_rule?.max_requests ||
