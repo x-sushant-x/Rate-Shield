@@ -46,7 +46,7 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 - **Token Bucket**
 - **Fixed Window Counter**
-- **More algorithms are on the way!**
+- **Sliding Window**
 
 ---
 
@@ -69,8 +69,10 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 #### v2 Roadmap
 - [x] Cache rules locally for better performance.
+- [x] Add Sliding Window rate limiting strategy.
 - [ ] Goroutine pool to increase rate litiming efficiency and performance.
 - [ ] Slack integration.
+- [ ] End-2-End Testing
  
 
 #### 🤝 **Contributing**
