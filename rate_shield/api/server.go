@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/limiter"
@@ -16,15 +17,15 @@ type Server struct {
 	limiter limiter.Limiter
 }
 
-func NewServer(port int, limiter limiter.Limiter) Server {
+func NewServer(limiter limiter.Limiter) Server {
 	return Server{
-		port:    port,
+		port:    getPort(),
 		limiter: limiter,
 	}
 }
 
 func (s Server) StartServer() error {
-	log.Info().Msg("Setting Up API endpoints ✅")
+	log.Info().Msgf("Setting Up API endpoints in port: %d ✅", s.port)
 	mux := http.NewServeMux()
 
 	s.rulesRoutes(mux)
@@ -98,4 +99,18 @@ func (s Server) setupHome(mux *http.ServeMux) {
 
 		fmt.Fprint(w, string(homepage))
 	})
+}
+
+func getPort() int {
+	port := os.Getenv("RATE_SHIELD_PORT")
+	if len(port) == 0 {
+		log.Fatal().Msg("RATE_SHIELD_PORT environment variable not provided in docker run command.")
+	}
+
+	portInt, err := strconv.Atoi(port)
+	if err != nil {
+		log.Fatal().Msg("Invalid port number provided.")
+	}
+
+	return portInt
 }

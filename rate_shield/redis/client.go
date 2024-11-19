@@ -2,6 +2,7 @@ package redisClient
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -13,29 +14,35 @@ var (
 	TokenBucketClient *redis.ClusterClient
 )
 
-func createNewRedisConnection(addr string, db int) (*redis.Client, error) {
+func createNewRedisConnection(addr, password string) (*redis.Client, error) {
 	conn := redis.NewClient(&redis.Options{
 		Addr:     addr,
-		Password: "",
-		DB:       db,
+		Password: password,
 	})
 
-	pingCmd := conn.Ping(ctx)
-	if pingCmd.Err() != nil {
-		return nil, pingCmd.Err()
+	result, err := conn.Ping(ctx).Result()
+	if err != nil || result == "" {
+		log.Fatal().Err(err).Msg("unable to connect to redis rules instance: " + addr)
 	}
 	return conn, nil
 }
 
 func NewRedisRateLimitClient() (RedisRateLimiterClient, *redis.ClusterClient, error) {
+	clusterURLs := utils.GetRedisClusterURLs()
+	clusterPassword := utils.GetRedisClusterPassword()
+
+	fmt.Printf("Cluster URLS: %s\n", clusterURLs[0])
+	fmt.Printf("Cluster Password: %s\n", clusterPassword)
+
 	client := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: utils.GetRedisClusterURLs(),
+		Password: clusterPassword,
+		Addrs:    clusterURLs,
 	})
 
 	result, err := client.Ping(ctx).Result()
 
 	if err != nil || result == "" {
-		log.Fatal().Err(err).Msg("unable to connect to redis or ping result is nil")
+		log.Fatal().Err(err).Msg("unable to connect to redis or ping result is nil for rate limit cluster")
 	}
 
 	TokenBucketClient = client
@@ -46,34 +53,14 @@ func NewRedisRateLimitClient() (RedisRateLimiterClient, *redis.ClusterClient, er
 }
 
 func NewRulesClient() (RedisRuleClient, error) {
-	env := getApplicationEnv()
-	port := getRedisRulesInstancePort()
+	url, password := utils.GetRedisRulesInstanceDetails()
 
-	connectionString := env + port
-
-	client, err := createNewRedisConnection(connectionString, 0)
+	client, err := createNewRedisConnection(url, password)
 	if err != nil {
-		log.Fatal().Err(err).Msg("unable to connect to redis rules instance on port: " + port)
+		log.Fatal().Err(err).Msg("unable to connect to redis rules instance: " + url)
 	}
 
 	return RedisRules{
 		client: client,
 	}, nil
-}
-
-func getApplicationEnv() string {
-	env := utils.GetApplicationEnviroment()
-	redisConnStr := ""
-
-	if env == "prod" {
-		redisConnStr = "redis:"
-	} else {
-		redisConnStr = "localhost:"
-	}
-
-	return redisConnStr
-}
-
-func getRedisRulesInstancePort() string {
-	return utils.GetRedisRulesInstancePort()
 }

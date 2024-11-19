@@ -17,26 +17,32 @@ func GetApplicationEnviroment() string {
 	return "dev"
 }
 
-func GetRedisRulesInstancePort() string {
-	port := os.Getenv("REDIS_RULES_INSTANCE_PORT")
+// (string, string, string) -> URL, Username, Password
+func GetRedisRulesInstanceDetails() (string, string) {
+	url := os.Getenv("REDIS_RULES_INSTANCE_URL")
+	checkEmptyENV(url, "REDIS_RULES_INSTANCE_URL must be provided in docker run command")
 
-	if len(port) != 0 {
-		return port
-	}
+	password := os.Getenv("REDIS_RULES_INSTANCE_PASSWORD")
 
-	return "7000"
+	return url, password
 }
 
 func GetRedisClusterURLs() []string {
 	clusterURLs := os.Getenv("REDIS_CLUSTERS_URLS")
-	if len(clusterURLs) == 0 {
-		log.Fatal().Msg("REDIS_CLUSTERS_URLS not specified in enviroment variables")
-	}
+	checkEmptyENV(clusterURLs, "REDIS_CLUSTERS_URLS not specified in enviroment variables")
 
 	clusterURLsArray := strings.Split(clusterURLs, ",")
-	if len(clusterURLsArray) == 0 {
-		log.Fatal().Msg("REDIS_CLUSTERS_URLS is empty in enviroment variables. Specify comma seperated urls.")
-	}
+	checkEmptyENV(clusterURLs, "REDIS_CLUSTERS_URLS is empty in enviroment variables. Specify comma seperated urls.")
 
 	return clusterURLsArray
+}
+func GetRedisClusterPassword() string {
+	password := os.Getenv("REDIS_CLUSTER_PASSWORD")
+	return password
+}
+
+func checkEmptyENV(Var string, message string) {
+	if len(Var) == 0 {
+		log.Fatal().Msg(message)
+	}
 }
