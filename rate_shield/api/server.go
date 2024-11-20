@@ -14,10 +14,10 @@ import (
 
 type Server struct {
 	port    int
-	limiter limiter.Limiter
+	limiter *limiter.Limiter
 }
 
-func NewServer(limiter limiter.Limiter) Server {
+func NewServer(limiter *limiter.Limiter) Server {
 	return Server{
 		port:    getPort(),
 		limiter: limiter,

@@ -9,10 +9,10 @@ import (
 )
 
 type RateLimitHandler struct {
-	limiterSvc limiter.Limiter
+	limiterSvc *limiter.Limiter
 }
 
-func NewRateLimitHandler(limiterSvc limiter.Limiter) RateLimitHandler {
+func NewRateLimitHandler(limiterSvc *limiter.Limiter) RateLimitHandler {
 	return RateLimitHandler{
 		limiterSvc: limiterSvc,
 	}

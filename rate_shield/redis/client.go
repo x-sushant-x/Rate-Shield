@@ -2,7 +2,6 @@ package redisClient
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
@@ -24,6 +23,7 @@ func createNewRedisConnection(addr, password string) (*redis.Client, error) {
 	if err != nil || result == "" {
 		log.Fatal().Err(err).Msg("unable to connect to redis rules instance: " + addr)
 	}
+
 	return conn, nil
 }
 
@@ -31,16 +31,12 @@ func NewRedisRateLimitClient() (RedisRateLimiterClient, *redis.ClusterClient, er
 	clusterURLs := utils.GetRedisClusterURLs()
 	clusterPassword := utils.GetRedisClusterPassword()
 
-	fmt.Printf("Cluster URLS: %s\n", clusterURLs[0])
-	fmt.Printf("Cluster Password: %s\n", clusterPassword)
-
 	client := redis.NewClusterClient(&redis.ClusterOptions{
 		Password: clusterPassword,
 		Addrs:    clusterURLs,
 	})
 
 	result, err := client.Ping(ctx).Result()
-
 	if err != nil || result == "" {
 		log.Fatal().Err(err).Msg("unable to connect to redis or ping result is nil for rate limit cluster")
 	}

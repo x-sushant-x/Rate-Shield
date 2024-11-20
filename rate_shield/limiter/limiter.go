@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"sync"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -18,7 +19,8 @@ type Limiter struct {
 	fixedWindow   *FixedWindowService
 	slidingWindow *SlidingWindowService
 	redisRuleSvc  service.RulesService
-	cachedRules   map[string]*models.Rule
+	cachedRules   *map[string]*models.Rule
+	rulesMutex    sync.RWMutex
 }
 
 func NewRateLimiterService(
@@ -31,12 +33,18 @@ func NewRateLimiterService(
 		slidingWindow: slidingWindow,
 		// This is initialized later in StartRateLimiter() function
 		cachedRules: nil,
+		rulesMutex:  sync.RWMutex{},
 	}
 }
 
 func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 	key := ip + ":" + endpoint
-	rule, found := l.cachedRules[endpoint]
+
+	l.rulesMutex.RLock()
+	rulesMap := *l.cachedRules
+	l.rulesMutex.RUnlock()
+
+	rule, found := rulesMap[endpoint]
 
 	if found {
 		switch rule.Strategy {
@@ -105,10 +113,9 @@ func (l *Limiter) GetRule(key string) (*models.Rule, bool, error) {
 func (l *Limiter) StartRateLimiter() {
 	log.Info().Msg("Starting limiter service ✅")
 	l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
-	log.Info().Msgf("Total Rules: %d", len(l.cachedRules))
+	log.Info().Msgf("Total Rules: %d", len(*l.cachedRules))
 	l.tokenBucket.startAddTokenJob()
 	go l.listenToRulesUpdate()
-
 }
 
 func (l *Limiter) listenToRulesUpdate() {
@@ -119,7 +126,10 @@ func (l *Limiter) listenToRulesUpdate() {
 		data := <-updatesChannel
 
 		if data == "UpdateRules" {
+			l.rulesMutex.Lock()
 			l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
+			l.rulesMutex.Unlock()
+
 			log.Info().Msg("Rules Updated Successfully")
 		}
 	}

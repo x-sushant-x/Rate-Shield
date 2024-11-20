@@ -20,7 +20,7 @@ type RulesService interface {
 	SearchRule(searchText string) ([]models.Rule, error)
 	CreateOrUpdateRule(models.Rule) error
 	DeleteRule(endpoint string) error
-	CacheRulesLocally() map[string]*models.Rule
+	CacheRulesLocally() *map[string]*models.Rule
 	ListenToRulesUpdate(updatesChannel chan string)
 }
 
@@ -101,7 +101,7 @@ func (s RulesServiceRedis) DeleteRule(endpoint string) error {
 	return s.redisClient.PublishMessage(redisChannel, "rule-updated")
 }
 
-func (s RulesServiceRedis) CacheRulesLocally() map[string]*models.Rule {
+func (s RulesServiceRedis) CacheRulesLocally() *map[string]*models.Rule {
 	rules, err := s.GetAllRules()
 	if err != nil {
 		log.Err(err).Msg("Unable to cache all rules locally")
@@ -114,7 +114,7 @@ func (s RulesServiceRedis) CacheRulesLocally() map[string]*models.Rule {
 	}
 
 	log.Info().Msg("Rules locally cached ✅")
-	return cachedRules
+	return &cachedRules
 }
 
 func (s RulesServiceRedis) ListenToRulesUpdate(updatesChannel chan string) {
