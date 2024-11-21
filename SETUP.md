@@ -1,34 +1,39 @@
 ### How to setup Rate Shield?
-This document will guide you through the process of setting up Rate Shield. 
 
 #### Prerequisite
+* Docker
+* Redis Instance (for rules)
 * Redis Cluster
-* Go Programming Language
 
-#### Setup Redis Cluster
-Rate Shield require redis cluster with ReJSON enabled. I'll update this guide soon for steps related setting up Redis Cluster.
+* Environment variables for the application:
+    * RATE_SHIELD_PORT: The port number the application will listen on.
+    * REDIS_RULES_INSTANCE_URL: URL for the Redis instance storing rate limit rules.
+    * REDIS_RULES_INSTANCE_USERNAME: Username for Redis authentication.
+    * REDIS_RULES_INSTANCE_PASSWORD: Password for Redis authentication.
+    * REDIS_CLUSTERS_URLS: Comma seperated urls. Ex - 127.0.0.1:6380,127.0.0.1:6381
+    * REDIS_CLUSTER_USERNAME: Username for Redis Cluster authentication.
+    * REDIS_CLUSTER_PASSWORD: Password for Redis Cluster authentication.
 
-#### Setup .env
-Inside `rate_shield` folder create .env file and add following variables.
+
+<br><br>
+
+1. Go to `rate_shield` subfolder.
+2. Build docker image using `docker build -t rate-shield-backend .`
+
+3. Once docker image is built you can run it using -
 ```
-SLACK_TOKEN=
-SLACK_CHANNEL=
-
-# dev or prod
-ENV=
-
-# Redis Ports Config
-REDIS_RULES_INSTANCE_URL=
-
-REDIS_CLUSTERS_URLS=
+docker run -d \
+  -p 8080:8080 \
+  -e RATE_SHIELD_PORT=8080 \
+  -e REDIS_RULES_INSTANCE_URL=redis://localhost:6379 \
+  -e REDIS_RULES_INSTANCE_USERNAME=user \
+  -e REDIS_RULES_INSTANCE_PASSWORD=password \
+  -e REDIS_CLUSTERS_URLS=localhost:6380,localhost:6381
+  rate-shield-app
 ```
 
-Rate Shield store all rules in one Redis instance and all other rate limiting related data in cluster. 
+<b>Important: - </b> Value for -p and RATE_SHIELD_PORT must be same.
 
-Add complete URL for your redis instance such as `REDIS_RULES_INSTANCE_URL=127.0.0.1:6379`. 
+Now you can access rate shield via localhost:8080 (value passed in RATE_SHIELD_PORT).
 
-Add comma seperated values of instances for cluster such as `REDIS_CLUSTERS_URLS=localhost:6380,localhost:6381`
-
-#### Run Application
-1. Go inside `rate_shield` folder.
-2. Run it via `go run main.go`
+Follow [this](https://github.com/x-sushant-x/Rate-Shield/tree/main/rate_shield/documentation) usage guide to know how to use Rate Shield.
