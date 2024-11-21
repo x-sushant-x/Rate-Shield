@@ -1,4 +1,4 @@
-const baseUrl = "http://localhost:8080/";
+const baseUrl = import.meta.env.VITE_RATE_SHIELD_BACKEND_BASE_URL;
 
 export interface rule {
     strategy: string;
@@ -45,7 +45,7 @@ interface getAllRuleResponse {
 }
 
 export async function getAllRules(): Promise<rule[]> {
-    const url = `${baseUrl}rule/list`;
+    const url = `${baseUrl}/rule/list`;
 
     try {
         const response = await fetch(url, {
@@ -70,6 +70,7 @@ export async function getPaginatedRules(
     pageNumber: number,
 ): Promise<paginatedRulesResponse> {
     const url = `${baseUrl}/rule/list?page=${pageNumber}&items=10`;
+    console.log('Base Url: ' + url)
 
     try {
         const response = await fetch(url, {
@@ -96,7 +97,7 @@ export async function getPaginatedRules(
 export async function searchRulesViaEndpoint(
     searchText: string,
 ): Promise<rule[]> {
-    const url = `${baseUrl}rule/search?endpoint=${searchText}`;
+    const url = `${baseUrl}/rule/search?endpoint=${searchText}`;
 
     try {
         const response = await fetch(url, {
@@ -118,7 +119,7 @@ export async function searchRulesViaEndpoint(
 }
 
 export async function createNewRule(rule: rule) {
-    const url = `${baseUrl}rule/add`;
+    const url = `${baseUrl}/rule/add`;
 
     try {
         const response = await fetch(url, {
@@ -140,7 +141,7 @@ export async function createNewRule(rule: rule) {
 }
 
 export async function deleteRule(ruleKey: string) {
-    const url = `${baseUrl}rule/delete`;
+    const url = `${baseUrl}/rule/delete`;
 
     try {
         const response = await fetch(url, {
