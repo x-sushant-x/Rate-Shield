@@ -20,6 +20,7 @@ func Unmarshal[T any](data []byte) (T, error) {
 	err := json.Unmarshal(data, &res)
 	if err != nil {
 		log.Err(err).Msgf("unable to unmarshal %s", string(data))
+		return res, err
 	}
 
 	return res, nil

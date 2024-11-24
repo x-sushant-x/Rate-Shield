@@ -1,0 +1,86 @@
+package limiter
+
+import (
+	"errors"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/x-sushant-x/RateShield/models"
+	"github.com/x-sushant-x/RateShield/service"
+)
+
+type MockRedisRateLimiterClient struct {
+	mock.Mock
+}
+
+func (m *MockRedisRateLimiterClient) JSONGet(key string) (string, bool, error) {
+	args := m.Called(key)
+	return args.String(0), args.Bool(1), args.Error(2)
+}
+
+func (m *MockRedisRateLimiterClient) JSONSet(key string, val interface{}) error {
+	args := m.Called(key, val)
+	return args.Error(0)
+}
+
+func (m *MockRedisRateLimiterClient) Expire(key string, expireTime time.Duration) error {
+	args := m.Called(key, expireTime)
+	return args.Error(0)
+}
+
+func TestTokenBucketService(t *testing.T) {
+	mockRedis := new(MockRedisRateLimiterClient)
+
+	slackSVC := service.NewSlackService("", "")
+	errorNotificationSVC := service.NewErrorNotificationSVC(*slackSVC)
+
+	svc := NewTokenBucketService(mockRedis, errorNotificationSVC)
+
+	t.Run("getBucket_success", func(t *testing.T) {
+		bucketData := `{"available_tokens" : 10}`
+
+		expectedBucket := &models.Bucket{
+			AvailableTokens: 10,
+		}
+
+		mockRedis.On("JSONGet", "token_bucket_test").Return(bucketData, true, nil)
+
+		result, found, err := svc.getBucket("test")
+		assert.NoError(t, err)
+		assert.True(t, found)
+		assert.Equal(t, expectedBucket, result)
+	})
+
+	t.Run("getBucket_error", func(t *testing.T) {
+
+		mockRedis.On("JSONGet", "token_bucket_test_error").Return("", false, errors.New("redis error"))
+
+		result, found, err := svc.getBucket("test_error")
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.False(t, found)
+	})
+
+	t.Run("getBucket_not_found", func(t *testing.T) {
+
+		mockRedis.On("JSONGet", "token_bucket_test_not_found").Return("", false, nil)
+
+		result, found, err := svc.getBucket("test_not_found")
+		assert.Nil(t, result)
+		assert.NoError(t, err)
+		assert.False(t, found)
+	})
+
+	t.Run("getBucket_unmarshal_error", func(t *testing.T) {
+		bucketData := `{"available_tokens" : "10"}`
+
+		mockRedis.On("JSONGet", "token_bucket_test_unmarshal_error").Return(bucketData, true, nil)
+
+		result, found, err := svc.getBucket("test_unmarshal_error")
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.False(t, found)
+	})
+}

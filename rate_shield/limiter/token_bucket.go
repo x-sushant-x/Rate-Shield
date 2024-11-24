@@ -106,7 +106,7 @@ func (t *TokenBucketService) getBucket(key string) (*models.Bucket, bool, error)
 
 	tokenBucket, err := utils.Unmarshal[models.Bucket]([]byte(data))
 	if err != nil {
-		log.Err(err).Msg(err.Error())
+		return nil, false, err
 	}
 
 	return &tokenBucket, true, nil
