@@ -15,12 +15,12 @@
     * REDIS_CLUSTER_PASSWORD: Password for Redis Cluster authentication.
 
 
-<br><br>
+<br>
 
 1. Go to `rate_shield` subfolder.
 2. Build docker image using `docker build -t rate-shield-backend .`
 
-3. Once docker image is built you can run it using -
+3. Once docker image is built you can run it using below command.
 ```
 docker run -d \
   -p 8080:8080 \
@@ -37,3 +37,18 @@ docker run -d \
 Now you can access rate shield via localhost:8080 (value passed in RATE_SHIELD_PORT).
 
 Follow [this](https://github.com/x-sushant-x/Rate-Shield/tree/main/rate_shield/documentation) usage guide to know how to use Rate Shield.
+
+<br>
+
+### Setup Frontend Client
+1. Go to `web` subfolder and build docker image using `docker build -t rate-shield-frontend .`
+2. Once docker image is built you can run it using below command.
+
+```
+docker run -p 6012:6012 \
+-e VITE_RATE_SHIELD_BACKEND_BASE_URL=http://localhost:9081 \
+-e PORT=6012 \
+rate_shield_frontend
+```
+
+<b>Important: -</b> VITE_RATE_SHIELD_BACKEND_BASE_URL should have the URL of your backend docker container and -p and -e PORT value should match.
