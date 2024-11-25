@@ -99,6 +99,7 @@ func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.Fixed
 	fixedWindow, err := utils.Unmarshal[models.FixedWindowCounter]([]byte(fixedWindowFromRedis))
 	if err != nil {
 		log.Err(err).Msg(err.Error())
+		return nil, true, err
 	}
 
 	return &fixedWindow, true, nil

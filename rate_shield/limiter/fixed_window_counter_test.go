@@ -1,6 +1,7 @@
 package limiter
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -60,12 +61,17 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.ExpectedCalls = nil
 		mockRedis.Calls = nil
 
-		mockRedis.On("JSONGet", mock.Anything).Return(&models.FixedWindowCounter{
+		fixedWindow := &models.FixedWindowCounter{
 			MaxRequests:    10,
 			CurrRequests:   5,
 			Window:         60,
 			LastAccessTime: time.Now().Unix() - 30,
-		}, true, nil)
+		}
+
+		windowStr, err := json.Marshal(fixedWindow)
+		assert.NoError(t, err)
+
+		mockRedis.On("JSONGet", mock.Anything).Return(string(windowStr), true, nil)
 		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
 
 		rule := &models.Rule{
@@ -85,12 +91,17 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.ExpectedCalls = nil
 		mockRedis.Calls = nil
 
-		mockRedis.On("JSONGet", mock.Anything).Return(&models.FixedWindowCounter{
+		fixedWindow := &models.FixedWindowCounter{
 			MaxRequests:    10,
 			CurrRequests:   10,
 			Window:         60,
 			LastAccessTime: time.Now().Unix() - 30,
-		}, true, nil)
+		}
+
+		windowStr, err := json.Marshal(fixedWindow)
+		assert.NoError(t, err)
+
+		mockRedis.On("JSONGet", mock.Anything).Return(string(windowStr), true, nil)
 
 		rule := &models.Rule{
 			FixedWindowCounterRule: &models.FixedWindowCounterRule{
@@ -109,13 +120,17 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.ExpectedCalls = nil
 		mockRedis.Calls = nil
 
-		mockRedis.On("JSONGet", mock.Anything).Return(&models.FixedWindowCounter{
+		fixedWindow := &models.FixedWindowCounter{
 			MaxRequests:    10,
 			CurrRequests:   10,
-			Window:         60,
-			LastAccessTime: time.Now().Unix() - 61,
-		}, true, nil)
-		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
+			Window:         10,
+			LastAccessTime: time.Now().Unix() - 30,
+		}
+
+		windowStr, err := json.Marshal(fixedWindow)
+		assert.NoError(t, err)
+
+		mockRedis.On("JSONGet", mock.Anything).Return(string(windowStr), true, nil)
 
 		rule := &models.Rule{
 			FixedWindowCounterRule: &models.FixedWindowCounterRule{
@@ -123,7 +138,7 @@ func TestProcessRequest(t *testing.T) {
 				Window:      60,
 			},
 		}
-
+		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
 		response := service.processRequest("192.168.1.4", "/test", rule)
 
 		assert.Equal(t, 200, response.HTTPStatusCode)
