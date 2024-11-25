@@ -2,6 +2,7 @@ package limiter
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -82,13 +83,21 @@ func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule *mod
 	return b, nil
 }
 
-func parseKey(key string) (string, string) {
+func parseKey(key string) (string, string, error) {
 	parts := strings.Split(key, ":")
-	return parts[0], parts[1]
+	if len(parts) != 2 {
+		return "", "", errors.New("invalid token bucket key")
+	}
+
+	return parts[0], parts[1], nil
 }
 
 func (t *TokenBucketService) spawnNewBucket(key string, rule *models.Rule) (*models.Bucket, error) {
-	ip, endpoint := parseKey(key)
+	ip, endpoint, err := parseKey(key)
+	if err != nil {
+		return nil, err
+	}
+
 	return t.createBucketFromRule(ip, endpoint, rule)
 }
 
