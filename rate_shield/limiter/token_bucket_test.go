@@ -185,4 +185,72 @@ func TestTokenBucketService(t *testing.T) {
 		_, _, err := parseKey("")
 		assert.Error(t, err)
 	})
+
+	t.Run("createBucketFromRule_success", func(t *testing.T) {
+		rule := &models.Rule{
+			Strategy:    "TOKEN BUCKET",
+			APIEndpoint: "/api/v1/get-data",
+			HTTPMethod:  "GET",
+			TokenBucketRule: &models.TokenBucketRule{
+				BucketCapacity: 10,
+				TokenAddRate:   10,
+			},
+		}
+
+		ip := "192.168.12.1"
+		endpoint := "/api/v1/get-data"
+		key := "token_bucket_" + ip + ":" + endpoint
+
+		bucket := &models.Bucket{
+			Endpoint:        "/api/v1/get-data",
+			Capacity:        10,
+			TokenAddRate:    10,
+			ClientIP:        "192.168.12.1",
+			CreatedAt:       time.Now().Unix(),
+			AvailableTokens: 10,
+		}
+
+		mockRedis.On("JSONSet", key, bucket).Return(nil)
+		mockRedis.On("Expire", key, time.Second*60).Return(nil)
+
+		_, err := svc.createBucketFromRule(ip, "/api/v1/get-data", rule)
+		assert.NoError(t, err)
+
+		mockRedis.ExpectedCalls = nil
+		mockRedis.Calls = nil
+	})
+
+	t.Run("createBucketFromRule_error", func(t *testing.T) {
+		rule := &models.Rule{
+			Strategy:    "TOKEN BUCKET",
+			APIEndpoint: "/api/v1/get-data",
+			HTTPMethod:  "GET",
+			TokenBucketRule: &models.TokenBucketRule{
+				BucketCapacity: 10,
+				TokenAddRate:   10,
+			},
+		}
+
+		ip := "192.168.12.1"
+		endpoint := "/api/v1/get-data"
+		key := "token_bucket_" + ip + ":" + endpoint
+
+		bucket := &models.Bucket{
+			Endpoint:        "/api/v1/get-data",
+			Capacity:        10,
+			TokenAddRate:    10,
+			ClientIP:        "192.168.12.1",
+			CreatedAt:       time.Now().Unix(),
+			AvailableTokens: 10,
+		}
+
+		mockRedis.On("JSONSet", key, bucket).Return(errors.New("redis-error"))
+		mockRedis.On("Expire", key, time.Second*60).Return(nil)
+
+		_, err := svc.createBucketFromRule(ip, "/api/v1/get-data", rule)
+		assert.Error(t, err)
+
+		mockRedis.ExpectedCalls = nil
+		mockRedis.Calls = nil
+	})
 }
