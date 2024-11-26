@@ -3,7 +3,7 @@
 #### Prerequisite
 * Docker
 * Redis Instance (for rules)
-* Redis Cluster
+* Redis Cluster (with ReJSON Module Enabled)
 
 * Environment variables for the application:
     * RATE_SHIELD_PORT: The port number the application will listen on.
