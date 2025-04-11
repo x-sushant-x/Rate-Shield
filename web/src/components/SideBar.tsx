@@ -14,7 +14,9 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectPage }) => {
         <div className="w-64 bg-sidebar-bg text-gray-300 rounded-xl flex flex-col justify-between mr-4">
             <div>
                 <div className="p-6">
+                    <a href='/'>
                     <img src={logo} />
+                    </a>
                 </div>
                 <ul>
             {[
@@ -34,10 +36,6 @@ const Sidebar: React.FC<SidebarProps> = ({ onSelectPage }) => {
                 </li>
             ))}
         </ul>
-            </div>
-
-            <div className='text-sm ml-6 mb-4'>
-                Still Under Development
             </div>
         </div>
     );

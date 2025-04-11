@@ -37,6 +37,7 @@ export interface slidingWindowCounterRule {
 export interface tokenBucketRule {
     bucket_capacity: number;
     token_add_rate: number;
+    retention_time: number;
 }
 
 interface getAllRuleResponse {
@@ -84,7 +85,7 @@ export async function getPaginatedRules(
         const data: paginatedRulesResponse = await response.json();
 
         if(data.data.rules.length === 0) {
-            throw new Error("No rules found. Start by creatign one.")
+            throw new Error("No rules found. Start by creating one.")
         }
 
         return data;
@@ -122,7 +123,8 @@ export async function createNewRule(rule: rule) {
     const url = `${baseUrl}/rule/add`;
 
     try {
-        const response = await fetch(url, {
+
+        const response = await fetch(url, { 
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
