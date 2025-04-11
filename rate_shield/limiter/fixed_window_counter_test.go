@@ -32,6 +32,11 @@ func (m *MockRedisFixedWindowClient) Expire(key string, expiration time.Duration
 	return args.Error(0)
 }
 
+func (m *MockRedisFixedWindowClient) Delete(key string) error {
+	args := m.Called(key)
+	return args.Error(0)
+}
+
 func TestProcessRequest(t *testing.T) {
 	mockRedis := new(MockRedisFixedWindowClient)
 	service := NewFixedWindowService(mockRedis)

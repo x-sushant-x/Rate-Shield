@@ -19,4 +19,5 @@ type RedisRateLimiterClient interface {
 	JSONSet(key string, val interface{}) error
 	JSONGet(key string) (string, bool, error)
 	Expire(key string, expireTime time.Duration) error
+	Delete(key string) error
 }
