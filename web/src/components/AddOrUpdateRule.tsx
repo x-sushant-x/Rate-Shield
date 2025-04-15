@@ -185,6 +185,8 @@ const AddOrUpdateRule: React.FC<Props> = ({
                                     Number.parseInt(e.target.value) || 0,
                                 token_add_rate:
                                     tokenBucket?.token_add_rate || 0,
+                                retention_time: 
+                                    tokenBucket?.retention_time || 0
                             })
                         }
                     />
@@ -200,6 +202,25 @@ const AddOrUpdateRule: React.FC<Props> = ({
                                     Number.parseInt(e.target.value) || 0,
                                 bucket_capacity:
                                     tokenBucket?.bucket_capacity || 0,
+                                retention_time: 
+                                    tokenBucket?.retention_time || 0
+                            });
+                        }}
+                    />
+
+                    <p className="mb-2 mt-6">Retention Time (in seconds)</p>
+                    <input
+                        className="bg-slate-200 pl-4 pr-4 py-2 rounded-md  focus:outline-none w-1/4"
+                        placeholder="Time to keep inactive bucket. Default 60"
+                        value={tokenBucket?.retention_time}
+                        onChange={(e) => {
+                            setTokenBucketRule({
+                                token_add_rate:
+                                    tokenBucket?.bucket_capacity || 0,
+                                bucket_capacity:
+                                    tokenBucket?.bucket_capacity || 0,
+                                retention_time: 
+                                    Number.parseInt(e.target.value) || 0
                             });
                         }}
                     />

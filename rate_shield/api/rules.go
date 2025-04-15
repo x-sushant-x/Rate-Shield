@@ -67,6 +67,12 @@ func (h RulesAPIHandler) SearchRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodOptions {
+		// Preflight
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
 	if r.Method == http.MethodPost {
 		updateReq, err := utils.ParseAPIBody[models.Rule](r)
 		if err != nil {

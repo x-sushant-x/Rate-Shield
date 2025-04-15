@@ -30,6 +30,11 @@ func (m *MockRedisRateLimiterClient) Expire(key string, expireTime time.Duration
 	return args.Error(0)
 }
 
+func (m *MockRedisRateLimiterClient) Delete(key string) error {
+	args := m.Called(key)
+	return args.Error(0)
+}
+
 func TestTokenBucketService(t *testing.T) {
 	mockRedis := new(MockRedisRateLimiterClient)
 

@@ -43,12 +43,29 @@ func (t *TokenBucketService) addTokensToBucket(key string) {
 		return
 	}
 
+	// How many seconds have passed since last refill
+	refilledAgo := time.Since(bucket.LastRefill).Seconds()
+
+	if refilledAgo >= float64(bucket.RetentionTime) {
+		// Remove bucket from redis
+		err := t.redisClient.Delete(key)
+		if err != nil {
+			t.sendDeleteBucketErrorNotification(key, bucket, err)
+		}
+
+		return
+	}
+
 	if bucket.AvailableTokens < bucket.Capacity {
 		tokensToAdd := bucket.Capacity - bucket.AvailableTokens
-		bucket.AvailableTokens += min(bucket.TokenAddRate, tokensToAdd)
 
-		if err := t.redisClient.JSONSet(key, bucket); err != nil {
-			t.sendSetBucketErrorNotification(key, bucket, err)
+		if tokensToAdd > 0 {
+			bucket.AvailableTokens += min(bucket.TokenAddRate, tokensToAdd)
+			bucket.LastRefill = time.Now()
+
+			if err := t.redisClient.JSONSet(key, bucket); err != nil {
+				t.sendSetBucketErrorNotification(key, bucket, err)
+			}
 		}
 	}
 }
@@ -65,6 +82,7 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 		AvailableTokens: capacity,
 		Endpoint:        endpoint,
 		TokenAddRate:    tokenAddRate,
+		LastRefill:      time.Now(),
 	}
 
 	err := t.saveBucket(b)
@@ -174,11 +192,6 @@ func (t *TokenBucketService) saveBucket(bucket *models.Bucket) error {
 		return err
 	}
 
-	if err := t.redisClient.Expire(key, BucketExpireTime); err != nil {
-		log.Error().Err(err).Msg("Error setting bucket expiration in Redis")
-		return err
-	}
-
 	return nil
 }
 
@@ -206,6 +219,12 @@ func (t *TokenBucketService) sendGetBucketErrorNotification(key string, err erro
 }
 
 func (t *TokenBucketService) sendSetBucketErrorNotification(key string, bucket *models.Bucket, err error) {
+	customError := fmt.Sprintf("Unable save bucket with key: %s and data: %+v got error: %s", key, bucket, err.Error())
+	t.errorNotificationSVC.SendErrorNotification(customError, time.Now(), "Nil", "Nil", models.Rule{})
+	log.Error().Err(err).Msg("Error saving updated bucket to Redis")
+}
+
+func (t *TokenBucketService) sendDeleteBucketErrorNotification(key string, bucket *models.Bucket, err error) {
 	customError := fmt.Sprintf("Unable save bucket with key: %s and data: %+v got error: %s", key, bucket, err.Error())
 	t.errorNotificationSVC.SendErrorNotification(customError, time.Now(), "Nil", "Nil", models.Rule{})
 	log.Error().Err(err).Msg("Error saving updated bucket to Redis")

@@ -28,3 +28,7 @@ func (r RedisRateLimit) JSONGet(key string) (string, bool, error) {
 func (r RedisRateLimit) Expire(key string, expiration time.Duration) error {
 	return r.client.Expire(ctx, key, expiration).Err()
 }
+
+func (r RedisRateLimit) Delete(key string) error {
+	return r.client.Del(ctx, key).Err()
+}
