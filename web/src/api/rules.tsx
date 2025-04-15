@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const baseUrl = import.meta.env.VITE_RATE_SHIELD_BACKEND_BASE_URL;
 
 export interface rule {
@@ -71,7 +73,6 @@ export async function getPaginatedRules(
     pageNumber: number,
 ): Promise<paginatedRulesResponse> {
     const url = `${baseUrl}/rule/list?page=${pageNumber}&items=10`;
-    console.log('Base Url: ' + url)
 
     try {
         const response = await fetch(url, {
@@ -123,17 +124,24 @@ export async function createNewRule(rule: rule) {
     const url = `${baseUrl}/rule/add`;
 
     try {
-
-        const response = await fetch(url, { 
-            method: "POST",
+        console.log("URL: " + url)
+        const response = await axios.post(url, JSON.stringify(rule), {
             headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(rule),
-        });
+                "Content-Type" : "application/json"
+            }
+        })
 
-        if (!response.ok) {
-            const errorText = await response.text();
+
+        // const response = await fetch(url, { 
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/json",
+        //     },
+        //     body: JSON.stringify(rule),
+        // });
+
+        if (response.status != 200) {
+            const errorText = await response.data;
             throw new Error(errorText);
         }
     } catch (error) {

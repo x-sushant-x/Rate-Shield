@@ -67,24 +67,28 @@ func (h RulesAPIHandler) SearchRules(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Request) {
-	// if r.Method == http.MethodPost {
-	updateReq, err := utils.ParseAPIBody[models.Rule](r)
-	if err != nil {
-		utils.BadRequestError(w)
-		return
-	}
-	err = h.rulesSvc.CreateOrUpdateRule(updateReq)
-	if err != nil {
-		utils.InternalError(w, err.Error())
+	if r.Method == http.MethodOptions {
+		// Preflight
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 
-	utils.SuccessResponse("Rule Created Successfully", w)
-	// }
+	if r.Method == http.MethodPost {
+		updateReq, err := utils.ParseAPIBody[models.Rule](r)
+		if err != nil {
+			utils.BadRequestError(w)
+			return
+		}
+		err = h.rulesSvc.CreateOrUpdateRule(updateReq)
+		if err != nil {
+			utils.InternalError(w, err.Error())
+			return
+		}
 
-	// else {
-	// 	utils.MethodNotAllowedError(w)
-	// }
+		utils.SuccessResponse("Rule Created Successfully", w)
+	} else {
+		utils.MethodNotAllowedError(w)
+	}
 }
 
 func (h RulesAPIHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
