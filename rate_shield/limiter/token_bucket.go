@@ -70,7 +70,7 @@ func (t *TokenBucketService) addTokensToBucket(key string) {
 	}
 }
 
-func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int) (*models.Bucket, error) {
+func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAddRate int, retentionTime int16) (*models.Bucket, error) {
 	if err := utils.ValidateCreateBucketReq(ip, endpoint, capacity, tokenAddRate); err != nil {
 		return nil, err
 	}
@@ -83,9 +83,10 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 		Endpoint:        endpoint,
 		TokenAddRate:    tokenAddRate,
 		LastRefill:      time.Now(),
+		RetentionTime:   retentionTime,
 	}
 
-	err := t.saveBucket(b)
+	err := t.saveBucket(b, true)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +95,7 @@ func (t *TokenBucketService) createBucket(ip, endpoint string, capacity, tokenAd
 }
 
 func (t *TokenBucketService) createBucketFromRule(ip, endpoint string, rule *models.Rule) (*models.Bucket, error) {
-	b, err := t.createBucket(ip, endpoint, int(rule.TokenBucketRule.BucketCapacity), int(rule.TokenBucketRule.TokenAddRate))
+	b, err := t.createBucket(ip, endpoint, int(rule.TokenBucketRule.BucketCapacity), int(rule.TokenBucketRule.TokenAddRate), rule.TokenBucketRule.RetentionTime)
 	if err != nil {
 		return nil, err
 	}
@@ -141,15 +142,18 @@ func (t *TokenBucketService) getBucket(key string) (*models.Bucket, bool, error)
 
 func (t *TokenBucketService) addTokens() {
 	ctx := context.TODO()
-	keys, err := redisClient.TokenBucketClient.Keys(ctx, "*").Result()
+	keys, err := redisClient.TokenBucketClient.Keys(ctx, "token_bucket_*").Result()
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to get Redis keys")
 		return
 	}
 
+	log.Info().Msgf("Total Keys: %d", len(keys))
+
 	for _, key := range keys {
 		t.addTokensToBucket(key)
 	}
+
 }
 
 func (t *TokenBucketService) processRequest(key string, rule *models.Rule) *models.RateLimitResponse {
@@ -173,7 +177,7 @@ func (t *TokenBucketService) processRequest(key string, rule *models.Rule) *mode
 
 	bucket.AvailableTokens--
 
-	if err := t.saveBucket(bucket); err != nil {
+	if err := t.saveBucket(bucket, false); err != nil {
 		return utils.BuildRateLimitErrorResponse(500)
 	}
 
@@ -185,11 +189,19 @@ func (t *TokenBucketService) processRequest(key string, rule *models.Rule) *mode
 	}
 }
 
-func (t *TokenBucketService) saveBucket(bucket *models.Bucket) error {
+func (t *TokenBucketService) saveBucket(bucket *models.Bucket, isNewBucket bool) error {
 	key := "token_bucket_" + bucket.ClientIP + ":" + bucket.Endpoint
 	if err := t.redisClient.JSONSet(key, bucket); err != nil {
 		log.Error().Err(err).Msg("Error saving new bucket to Redis")
 		return err
+	}
+
+	if isNewBucket {
+		expiration := time.Duration(bucket.RetentionTime) * time.Second
+		if err := t.redisClient.Expire(key, expiration); err != nil {
+			log.Error().Err(err).Msg("Failed to set TTL on bucket key")
+			return err
+		}
 	}
 
 	return nil
