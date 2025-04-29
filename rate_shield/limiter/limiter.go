@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	TokenAddTime = time.Minute * 1
+	TokenAddTime = time.Second * 10
 )
 
 type Limiter struct {
@@ -114,7 +114,9 @@ func (l *Limiter) StartRateLimiter() {
 	log.Info().Msg("Starting limiter service ✅")
 	l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
 	log.Info().Msgf("Total Rules: %d", len(*l.cachedRules))
-	l.tokenBucket.startAddTokenJob()
+
+	// Not required for now.
+	//l.tokenBucket.startAddTokenJob()
 	go l.listenToRulesUpdate()
 }
 

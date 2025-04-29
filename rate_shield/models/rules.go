@@ -13,7 +13,7 @@ type Rule struct {
 type TokenBucketRule struct {
 	BucketCapacity int64 `json:"bucket_capacity"`
 	TokenAddRate   int64 `json:"token_add_rate"`
-	RetentionTime  int   `json:"retention_time"`
+	RetentionTime  int16 `json:"retention_time"`
 }
 
 type FixedWindowCounterRule struct {
