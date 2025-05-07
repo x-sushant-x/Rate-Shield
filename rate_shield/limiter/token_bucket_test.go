@@ -114,7 +114,7 @@ func TestTokenBucketService(t *testing.T) {
 		mockRedis.On("JSONSet", "token_bucket_192.168.1.23:/api/v1/get-data", bucket).Return(nil)
 		mockRedis.On("Expire", "token_bucket_192.168.1.23:/api/v1/get-data", time.Second*60).Return(nil)
 
-		err := svc.saveBucket(bucket)
+		err := svc.saveBucket(bucket, true)
 		assert.NoError(t, err)
 
 		mockRedis.ExpectedCalls = nil
@@ -134,7 +134,7 @@ func TestTokenBucketService(t *testing.T) {
 		mockRedis.On("JSONSet", "token_bucket_192.168.1.23:/api/v1/get-data", bucket).Return(nil)
 		mockRedis.On("Expire", "token_bucket_192.168.1.23:/api/v1/get-data", time.Second*60).Return(nil)
 
-		err := svc.saveBucket(bucket)
+		err := svc.saveBucket(bucket, true)
 		assert.NoError(t, err)
 
 		mockRedis.ExpectedCalls = nil
@@ -154,7 +154,7 @@ func TestTokenBucketService(t *testing.T) {
 		mockRedis.On("JSONSet", "token_bucket_192.168.1.23:/api/v1/get-data", bucket).Return(errors.New("redis-error"))
 		mockRedis.On("Expire", "token_bucket_192.168.1.23:/api/v1/get-data", time.Second*60).Return(nil)
 
-		err := svc.saveBucket(bucket)
+		err := svc.saveBucket(bucket, true)
 		assert.Error(t, err)
 
 		mockRedis.ExpectedCalls = nil
@@ -174,7 +174,7 @@ func TestTokenBucketService(t *testing.T) {
 		mockRedis.On("JSONSet", "token_bucket_192.168.1.23:/api/v1/get-data", bucket).Return(nil)
 		mockRedis.On("Expire", "token_bucket_192.168.1.23:/api/v1/get-data", time.Second*60).Return(errors.New("redis-error"))
 
-		err := svc.saveBucket(bucket)
+		err := svc.saveBucket(bucket, false)
 		assert.Error(t, err)
 
 		mockRedis.ExpectedCalls = nil
