@@ -2,9 +2,6 @@
 
 A fully customizable rate limiter designed to apply rate limiting on individual APIs with specific rules.
 
-#### IMPORTANT: This project is having some bugs in Token Bucket Algorithm. Please use Sliding Window or Fixed Window counter instead. I'll remove this message once that bug is fixed.
-
-
 
 #### 📊 **Dashboard Overview**
 
