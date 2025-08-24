@@ -50,7 +50,7 @@ func (fw *FixedWindowService) prepareFixedWindow(ip, endpoint string, rule *mode
 }
 
 func (fw *FixedWindowService) handleRateLimit(fixedWindow *models.FixedWindowCounter, key string, currTime int64) *models.RateLimitResponse {
-	if currTime-fixedWindow.LastAccessTime < int64(fixedWindow.Window) {
+	if currTime-fixedWindow.CreatedAt < int64(fixedWindow.Window) {
 		return fw.processWithinTimeWindow(fixedWindow, key, currTime)
 	}
 	return fw.ResetWindow(key, currTime, fixedWindow)
