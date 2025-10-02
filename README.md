@@ -54,24 +54,15 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 ---
 
+### A detailed blog post about its working.
+[Read Here](https://beyondthesyntax.substack.com/p/i-made-a-configurable-rate-limiter)
+
+---
+
 #### How it works?
 <img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/architecture.png"></img>
 
----
-
-#### ⚠️ **Important Information**
-
-- **Current Limitation:**  
-  At present, RateShield only supports the Token Bucket, Fixed Window Counter algorithm & Sliding Window Counter, which may not fit all use cases.
-
----
-
-#### v2 Roadmap
-- [x] Cache rules locally for better performance.
-- [x] Add Sliding Window rate limiting strategy.
-- [ ] Slack integration.
-- [ ] End-2-End Testing
- 
+ ---
 
 #### 🤝 **Contributing**
 
