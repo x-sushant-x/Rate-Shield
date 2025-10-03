@@ -94,3 +94,40 @@ To streamline the rate limiting process, you can create custom middleware or int
 2. Receive the response and handle it accordingly, such as allowing the request to proceed or returning an error message to the client.
 
 While I'm not providing specific code examples for creating middleware in different languages and frameworks, we encourage you to implement it in your environment of choice. Your contributions are valuable; feel free to share your custom middleware implementations with the community to enhance the Rate Shield project.
+
+---
+
+## Redis Fallback Feature
+
+Rate Shield includes an **optional in-memory fallback** mechanism that activates when Redis becomes unavailable.
+
+### Configuration
+
+Enable fallback mode by setting these environment variables:
+
+```bash
+ENABLE_REDIS_FALLBACK=true       # Enable fallback (default: false)
+REDIS_RETRY_INTERVAL=30s         # Health check interval (default: 30s)
+```
+
+### How It Works
+
+1. **Redis Available**: Normal operation using Redis for rate limiting
+2. **Redis Fails**: Automatically switches to in-memory storage
+3. **Periodic Health Checks**: Monitors Redis availability based on retry interval
+4. **Auto-Recovery**: Switches back to Redis when connection is restored
+
+### Important Notes
+
+⚠️ **Limitations:**
+- In-memory data is **per-instance** (not distributed across multiple Rate Shield instances)
+- Data is **lost on restart** (non-persistent)
+- Best for **development**, **testing**, or **temporary resilience**
+- **Not recommended** for production multi-instance deployments
+
+✅ **Best For:**
+- Development without Redis dependency
+- Handling temporary Redis outages
+- Single-instance deployments
+
+📖 **Full Documentation**: See [REDIS_FALLBACK.md](../../REDIS_FALLBACK.md) for complete details, logging behavior, and best practices.
