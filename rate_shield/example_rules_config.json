@@ -1,0 +1,66 @@
+{
+  "rules": [
+    {
+      "strategy": "TOKEN BUCKET",
+      "endpoint": "/api/v1/users",
+      "http_method": "GET",
+      "allow_on_error": true,
+      "token_bucket_rule": {
+        "bucket_capacity": 100,
+        "token_add_rate": 10,
+        "retention_time": 3600
+      }
+    },
+    {
+      "strategy": "FIXED WINDOW COUNTER",
+      "endpoint": "/api/v1/login",
+      "http_method": "POST",
+      "allow_on_error": false,
+      "fixed_window_counter_rule": {
+        "max_requests": 5,
+        "window": 60
+      }
+    },
+    {
+      "strategy": "SLIDING WINDOW COUNTER",
+      "endpoint": "/api/v1/upload",
+      "http_method": "POST",
+      "allow_on_error": true,
+      "sliding_window_counter_rule": {
+        "max_requests": 20,
+        "window": 300
+      }
+    },
+    {
+      "strategy": "TOKEN BUCKET",
+      "endpoint": "/api/v1/search",
+      "http_method": "GET",
+      "allow_on_error": true,
+      "token_bucket_rule": {
+        "bucket_capacity": 50,
+        "token_add_rate": 5,
+        "retention_time": 1800
+      }
+    },
+    {
+      "strategy": "FIXED WINDOW COUNTER",
+      "endpoint": "/api/v1/reset-password",
+      "http_method": "POST",
+      "allow_on_error": false,
+      "fixed_window_counter_rule": {
+        "max_requests": 3,
+        "window": 3600
+      }
+    },
+    {
+      "strategy": "SLIDING WINDOW COUNTER",
+      "endpoint": "/api/v1/download",
+      "http_method": "GET",
+      "allow_on_error": true,
+      "sliding_window_counter_rule": {
+        "max_requests": 100,
+        "window": 3600
+      }
+    }
+  ]
+}

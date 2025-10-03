@@ -8,6 +8,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/api"
+	"github.com/x-sushant-x/RateShield/config"
 	"github.com/x-sushant-x/RateShield/limiter"
 	redisClient "github.com/x-sushant-x/RateShield/redis"
 	"github.com/x-sushant-x/RateShield/service"
@@ -27,10 +28,26 @@ func init() {
 }
 
 func main() {
-
-	redisRulesClient, err := redisClient.NewRulesClient()
-	if err != nil {
-		log.Fatal().Err(err)
+	// Check for configuration file first
+	var rulesService service.RulesService
+	
+	if configPath, exists := config.CheckConfigFileExists("."); exists {
+		log.Info().Msgf("Found configuration file: %s", configPath)
+		log.Info().Msg("Using file-based rules configuration")
+		
+		configRulesService, err := service.NewConfigRulesService(configPath)
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to initialize config-based rules service")
+		}
+		rulesService = configRulesService
+	} else {
+		log.Info().Msg("No configuration file found, using Redis-based rules")
+		
+		redisRulesClient, err := redisClient.NewRulesClient()
+		if err != nil {
+			log.Fatal().Err(err).Msg("Failed to initialize Redis rules client")
+		}
+		rulesService = service.NewRedisRulesService(redisRulesClient)
 	}
 
 	slackSvc := service.NewSlackService(slackToken, slackChannelID)
@@ -39,23 +56,20 @@ func main() {
 
 	redisRateLimiter, clusterClient, err := redisClient.NewRedisRateLimitClient()
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Msg("Failed to initialize Redis rate limiter")
 	}
 
 	tokenBucketSvc := limiter.NewTokenBucketService(redisRateLimiter, errorNotificationSvc)
 
 	fixedWindowSvc := limiter.NewFixedWindowService(redisRateLimiter)
 
-	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
-
 	slidingWindowSvc := limiter.NewSlidingWindowService(clusterClient)
 
-	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
+	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, rulesService)
 	limiter.StartRateLimiter()
 
 	server := api.NewServer(&limiter)
 	log.Fatal().Err(server.StartServer())
-
 }
 
 func loadENVFile() {
