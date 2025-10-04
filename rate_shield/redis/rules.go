@@ -16,6 +16,11 @@ type RedisRules struct {
 	client *redis.Client
 }
 
+// GetClient returns the underlying Redis client
+func (r RedisRules) GetClient() *redis.Client {
+	return r.client
+}
+
 func (r RedisRules) DeleteRule(key string) error {
 	err := r.client.Del(ctx, key).Err()
 	if err != nil {

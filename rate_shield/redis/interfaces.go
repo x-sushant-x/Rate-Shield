@@ -21,3 +21,10 @@ type RedisRateLimiterClient interface {
 	Expire(key string, expireTime time.Duration) error
 	Delete(key string) error
 }
+
+type RedisAuditClient interface {
+	AppendAuditLog(auditLog models.AuditLog) error
+	GetAuditLogs(start, end int64) ([]models.AuditLog, error)
+	GetAuditLogCount() (int64, error)
+	GetAllAuditLogs() ([]models.AuditLog, error)
+}

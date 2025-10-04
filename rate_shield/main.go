@@ -33,6 +33,10 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
+	// Create audit client and service
+	auditClient := redisClient.NewAuditClient(redisRulesClient.(redisClient.RedisRules).GetClient())
+	auditSvc := service.NewAuditService(auditClient)
+
 	slackSvc := service.NewSlackService(slackToken, slackChannelID)
 
 	errorNotificationSvc := service.NewErrorNotificationSVC(*slackSvc)
@@ -46,7 +50,7 @@ func main() {
 
 	fixedWindowSvc := limiter.NewFixedWindowService(redisRateLimiter)
 
-	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
+	redisRulesSvc := service.NewRedisRulesService(redisRulesClient, auditSvc)
 
 	slidingWindowSvc := limiter.NewSlidingWindowService(clusterClient)
 
