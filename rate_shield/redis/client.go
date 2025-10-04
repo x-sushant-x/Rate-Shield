@@ -20,11 +20,7 @@ func createNewRedisConnection(addr, password string) (*redis.Client, error) {
 
 	result, err := conn.Ping(ctx).Result()
 	if err != nil || result == "" {
-		// Return error instead of fatal if fallback is enabled
-		if utils.GetRedisFallbackEnabled() {
-			log.Warn().Err(err).Msg("unable to connect to redis rules instance: " + addr + " (fallback enabled)")
-			return nil, err
-		}
+		// Rules instance is ALWAYS required - no fallback
 		log.Fatal().Err(err).Msg("unable to connect to redis rules instance: " + addr)
 	}
 
@@ -57,22 +53,17 @@ func NewRedisRateLimitClient() (RedisRateLimiterClient, *redis.ClusterClient, er
 	}, client, nil
 }
 
-func NewRulesClient() (RedisRuleClient, error) {
+func NewRulesClient() (RedisRuleClient, *redis.Client, error) {
 	url, password := utils.GetRedisRulesInstanceDetails()
 
 	client, err := createNewRedisConnection(url, password)
 	if err != nil {
-		// Return error instead of fatal if fallback is enabled
-		if utils.GetRedisFallbackEnabled() {
-			log.Warn().Err(err).Msg("unable to connect to redis rules instance: " + url + " (fallback enabled)")
-			return nil, err
-		}
 		log.Fatal().Err(err).Msg("unable to connect to redis rules instance: " + url)
 	}
 
 	return RedisRules{
 		client: client,
-	}, nil
+	}, client, nil
 }
 
 func NewSlidingWindowClient(clusterClient *redis.ClusterClient) SlidingWindowClient {

@@ -65,7 +65,7 @@ func (s Server) setupCORS(h http.Handler) http.Handler {
 }
 
 func (s Server) rulesRoutes(mux *http.ServeMux) {
-	redisRuleClient, err := redisClient.NewRulesClient()
+	redisRuleClient, _, err := redisClient.NewRulesClient()
 	if err != nil {
 		log.Err(err).Msg("unable to setup new redis rules client")
 		log.Fatal()
