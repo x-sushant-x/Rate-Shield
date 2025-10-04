@@ -66,11 +66,13 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.ExpectedCalls = nil
 		mockRedis.Calls = nil
 
+		now := time.Now().Unix()
 		fixedWindow := &models.FixedWindowCounter{
 			MaxRequests:    10,
 			CurrRequests:   5,
 			Window:         60,
-			LastAccessTime: time.Now().Unix() - 30,
+			CreatedAt:      now - 30,
+			LastAccessTime: now - 30,
 		}
 
 		windowStr, err := json.Marshal(fixedWindow)
@@ -96,11 +98,13 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.ExpectedCalls = nil
 		mockRedis.Calls = nil
 
+		now := time.Now().Unix()
 		fixedWindow := &models.FixedWindowCounter{
 			MaxRequests:    10,
 			CurrRequests:   10,
 			Window:         60,
-			LastAccessTime: time.Now().Unix() - 30,
+			CreatedAt:      now - 30,
+			LastAccessTime: now - 30,
 		}
 
 		windowStr, err := json.Marshal(fixedWindow)
@@ -125,17 +129,20 @@ func TestProcessRequest(t *testing.T) {
 		mockRedis.ExpectedCalls = nil
 		mockRedis.Calls = nil
 
+		now := time.Now().Unix()
 		fixedWindow := &models.FixedWindowCounter{
 			MaxRequests:    10,
 			CurrRequests:   10,
 			Window:         10,
-			LastAccessTime: time.Now().Unix() - 30,
+			CreatedAt:      now - 30,
+			LastAccessTime: now - 30,
 		}
 
 		windowStr, err := json.Marshal(fixedWindow)
 		assert.NoError(t, err)
 
 		mockRedis.On("JSONGet", mock.Anything).Return(string(windowStr), true, nil)
+		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
 
 		rule := &models.Rule{
 			FixedWindowCounterRule: &models.FixedWindowCounterRule{
@@ -143,7 +150,7 @@ func TestProcessRequest(t *testing.T) {
 				Window:      60,
 			},
 		}
-		mockRedis.On("JSONSet", mock.Anything, mock.Anything).Return(nil)
+
 		response := service.processRequest("192.168.1.4", "/test", rule)
 
 		assert.Equal(t, 200, response.HTTPStatusCode)

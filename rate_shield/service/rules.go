@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/rs/zerolog/log"
@@ -35,10 +36,16 @@ func NewRedisRulesService(client redisClient.RedisRuleClient) RulesServiceRedis 
 }
 
 func (s RulesServiceRedis) GetRule(key string) (*models.Rule, bool, error) {
+	if s.redisClient == nil {
+		return nil, false, nil
+	}
 	return s.redisClient.GetRule(key)
 }
 
 func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
+	if s.redisClient == nil {
+		return []models.Rule{}, nil
+	}
 	keys, _, err := s.redisClient.GetAllRuleKeys()
 	if err != nil {
 		log.Err(err).Msg("unable to get all rule keys from redis")
@@ -82,6 +89,9 @@ func (s RulesServiceRedis) SearchRule(searchText string) ([]models.Rule, error) 
 }
 
 func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
+	if s.redisClient == nil {
+		return fmt.Errorf("redis client unavailable - cannot create or update rules in fallback mode")
+	}
 	err := s.redisClient.SetRule(rule.APIEndpoint, rule)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
@@ -92,6 +102,9 @@ func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
 }
 
 func (s RulesServiceRedis) DeleteRule(endpoint string) error {
+	if s.redisClient == nil {
+		return fmt.Errorf("redis client unavailable - cannot delete rules in fallback mode")
+	}
 	err := s.redisClient.DeleteRule(endpoint)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
@@ -118,6 +131,10 @@ func (s RulesServiceRedis) CacheRulesLocally() *map[string]*models.Rule {
 }
 
 func (s RulesServiceRedis) ListenToRulesUpdate(updatesChannel chan string) {
+	if s.redisClient == nil {
+		log.Warn().Msg("Redis client unavailable - cannot listen to rule updates in fallback mode")
+		return
+	}
 	s.redisClient.ListenToRulesUpdate(updatesChannel)
 }
 
