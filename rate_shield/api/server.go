@@ -29,6 +29,7 @@ func (s Server) StartServer() error {
 	mux := http.NewServeMux()
 
 	s.rulesRoutes(mux)
+	s.auditRoutes(mux)
 	s.registerRateLimiterRoutes(mux)
 	s.setupHome(mux)
 
@@ -71,13 +72,33 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 		log.Fatal()
 	}
 
-	rulesSvc := service.NewRedisRulesService(redisRuleClient)
+	// Create audit client and service
+	auditClient := redisClient.NewAuditClient(redisRuleClient.(*redisClient.RedisRules).GetClient())
+	auditSvc := service.NewAuditService(auditClient)
+
+	// Create rules service with audit service
+	rulesSvc := service.NewRedisRulesService(redisRuleClient, auditSvc)
 	rulesHandler := NewRulesAPIHandler(rulesSvc)
 
 	mux.HandleFunc("/rule/list", rulesHandler.ListAllRules)
 	mux.HandleFunc("/rule/add", rulesHandler.CreateOrUpdateRule)
 	mux.HandleFunc("/rule/delete", rulesHandler.DeleteRule)
 	mux.HandleFunc("/rule/search", rulesHandler.SearchRules)
+}
+
+func (s Server) auditRoutes(mux *http.ServeMux) {
+	redisRuleClient, err := redisClient.NewRulesClient()
+	if err != nil {
+		log.Err(err).Msg("unable to setup new redis rules client for audit")
+		log.Fatal()
+	}
+
+	// Create audit client and service
+	auditClient := redisClient.NewAuditClient(redisRuleClient.(*redisClient.RedisRules).GetClient())
+	auditSvc := service.NewAuditService(auditClient)
+	auditHandler := NewAuditAPIHandler(auditSvc)
+
+	mux.HandleFunc("/audit/logs", auditHandler.ListAuditLogs)
 }
 
 func (s Server) registerRateLimiterRoutes(mux *http.ServeMux) {

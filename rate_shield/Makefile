@@ -1,5 +1,5 @@
 build:
-	@ go build -o output
-	
+	@ go build -o RateShield
+
 run: build
-	@ ./output/RateShield
+	@ ./RateShield

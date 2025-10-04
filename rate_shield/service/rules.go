@@ -18,19 +18,21 @@ type RulesService interface {
 	GetPaginatedRules(page, items int) (models.PaginatedRules, error)
 	GetRule(key string) (*models.Rule, bool, error)
 	SearchRule(searchText string) ([]models.Rule, error)
-	CreateOrUpdateRule(models.Rule) error
-	DeleteRule(endpoint string) error
+	CreateOrUpdateRule(rule models.Rule, actor, ipAddress, userAgent string) error
+	DeleteRule(endpoint, actor, ipAddress, userAgent string) error
 	CacheRulesLocally() *map[string]*models.Rule
 	ListenToRulesUpdate(updatesChannel chan string)
 }
 
 type RulesServiceRedis struct {
 	redisClient redisClient.RedisRuleClient
+	auditSvc    AuditService
 }
 
-func NewRedisRulesService(client redisClient.RedisRuleClient) RulesServiceRedis {
+func NewRedisRulesService(client redisClient.RedisRuleClient, auditSvc AuditService) RulesServiceRedis {
 	return RulesServiceRedis{
 		redisClient: client,
+		auditSvc:    auditSvc,
 	}
 }
 
@@ -81,23 +83,66 @@ func (s RulesServiceRedis) SearchRule(searchText string) ([]models.Rule, error) 
 	return searchedRules, nil
 }
 
-func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule) error {
-	err := s.redisClient.SetRule(rule.APIEndpoint, rule)
+func (s RulesServiceRedis) CreateOrUpdateRule(rule models.Rule, actor, ipAddress, userAgent string) error {
+	// Check if rule already exists to determine action (CREATE vs UPDATE)
+	existingRule, found, err := s.redisClient.GetRule(rule.APIEndpoint)
+
+	var action string
+	var oldRule *models.Rule
+
+	if found && err == nil {
+		// Rule exists - this is an UPDATE
+		action = models.AuditActionUpdate
+		oldRule = existingRule
+	} else {
+		// Rule doesn't exist - this is a CREATE
+		action = models.AuditActionCreate
+		oldRule = nil
+	}
+
+	// Save the rule to Redis
+	err = s.redisClient.SetRule(rule.APIEndpoint, rule)
 	if err != nil {
 		log.Err(err).Msg("unable to create or update rule")
 		return err
+	}
+
+	// Log audit event
+	if s.auditSvc != nil {
+		auditErr := s.auditSvc.LogRuleChange(actor, action, rule.APIEndpoint, oldRule, &rule, ipAddress, userAgent)
+		if auditErr != nil {
+			log.Warn().Err(auditErr).Msg("failed to log audit event for rule change")
+			// Don't fail the operation if audit logging fails
+		}
 	}
 
 	return s.redisClient.PublishMessage(redisChannel, "rule-updated")
 }
 
-func (s RulesServiceRedis) DeleteRule(endpoint string) error {
-	err := s.redisClient.DeleteRule(endpoint)
-	if err != nil {
-		log.Err(err).Msg("unable to create or update rule")
-		return err
-
+func (s RulesServiceRedis) DeleteRule(endpoint, actor, ipAddress, userAgent string) error {
+	// Get the existing rule before deleting for audit log
+	existingRule, found, err := s.redisClient.GetRule(endpoint)
+	if !found || err != nil {
+		log.Warn().Str("endpoint", endpoint).Msg("rule not found for deletion")
+		// Still attempt to delete in case of inconsistency
 	}
+
+	// Delete the rule from Redis
+	err = s.redisClient.DeleteRule(endpoint)
+	if err != nil {
+		log.Err(err).Msg("unable to delete rule")
+		return err
+	}
+
+	// Log audit event
+	if s.auditSvc != nil && existingRule != nil {
+		auditErr := s.auditSvc.LogRuleChange(actor, models.AuditActionDelete, endpoint, existingRule, nil, ipAddress, userAgent)
+		if auditErr != nil {
+			log.Warn().Err(auditErr).Msg("failed to log audit event for rule deletion")
+			// Don't fail the operation if audit logging fails
+		}
+	}
+
 	return s.redisClient.PublishMessage(redisChannel, "rule-updated")
 }
 
