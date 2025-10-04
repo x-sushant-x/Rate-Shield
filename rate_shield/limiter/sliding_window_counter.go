@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/x-sushant-x/RateShield/models"
+	redisClient "github.com/x-sushant-x/RateShield/redis"
 	"github.com/x-sushant-x/RateShield/utils"
 )
 
@@ -15,12 +15,12 @@ var (
 )
 
 type SlidingWindowService struct {
-	redisClient *redis.ClusterClient
+	client redisClient.SlidingWindowClient
 }
 
-func NewSlidingWindowService(redisClient *redis.ClusterClient) SlidingWindowService {
+func NewSlidingWindowService(client redisClient.SlidingWindowClient) SlidingWindowService {
 	return SlidingWindowService{
-		redisClient: redisClient,
+		client: client,
 	}
 }
 
@@ -50,34 +50,26 @@ func (s *SlidingWindowService) processRequest(ip, endpoint string, rule *models.
 func (s *SlidingWindowService) removeOldRequestsAndCountActiveRequests(key string, now int64, windowSize time.Duration) (int64, error) {
 	then := fmt.Sprintf("%d", now-int64(windowSize.Seconds()))
 
-	pipe := s.redisClient.TxPipeline()
-	pipe.ZRemRangeByScore(ctx, key, "0", then)
-
-	countCmd := pipe.ZCount(ctx, key, then, fmt.Sprintf("%d", now))
-
-	_, err := pipe.Exec(ctx)
+	err := s.client.ZRemRangeByScore(ctx, key, "0", then)
 	if err != nil {
 		return -1, err
 	}
 
-	count, err := countCmd.Result()
+	count, err := s.client.ZCount(ctx, key, then, fmt.Sprintf("%d", now))
 	if err != nil {
 		return -1, err
 	}
+
 	return count, nil
 }
 
 func (s *SlidingWindowService) updateWindow(key string, now int64, windowSize time.Duration) error {
-	pipe := s.redisClient.TxPipeline()
+	err := s.client.ZAdd(ctx, key, now)
+	if err != nil {
+		return err
+	}
 
-	pipe.ZAdd(ctx, key, redis.Z{
-		Member: now,
-		Score:  float64(now),
-	})
-
-	pipe.Expire(ctx, key, windowSize)
-
-	_, err := pipe.Exec(ctx)
+	err = s.client.Expire(ctx, key, windowSize)
 	if err != nil {
 		return err
 	}

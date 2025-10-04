@@ -94,3 +94,55 @@ To streamline the rate limiting process, you can create custom middleware or int
 2. Receive the response and handle it accordingly, such as allowing the request to proceed or returning an error message to the client.
 
 While I'm not providing specific code examples for creating middleware in different languages and frameworks, we encourage you to implement it in your environment of choice. Your contributions are valuable; feel free to share your custom middleware implementations with the community to enhance the Rate Shield project.
+
+---
+
+## Redis Fallback Feature
+
+Rate Shield includes an **optional in-memory fallback** mechanism for the Rate Limit Cluster when it becomes unavailable.
+
+**Important:** Fallback **ONLY** applies to the Rate Limit Redis Cluster. The Rules Redis instance is **ALWAYS required** for application startup.
+
+### Configuration
+
+Enable fallback mode by setting these environment variables:
+
+```bash
+ENABLE_REDIS_FALLBACK=true       # Enable fallback (default: false)
+REDIS_RETRY_INTERVAL=30s         # Health check interval (default: 30s)
+```
+
+### Redis Architecture
+
+Rate Shield uses **two separate Redis instances**:
+- **Rules Instance**: Stores rate limiting rules (ALWAYS required)
+- **Rate Limit Cluster**: Stores rate limiting state (supports fallback)
+
+### How It Works
+
+1. **Normal Operation**: Both Redis instances available
+2. **Rules Instance Fails**: Uses cached rules, monitors for recovery
+3. **Rate Limit Cluster Fails**: Switches to in-memory storage (if fallback enabled)
+4. **Periodic Health Checks**: Monitors both Redis instances based on retry interval
+5. **Auto-Recovery**: Switches back when connections are restored
+
+### Important Notes
+
+⚠️ **Rules Instance:**
+- **Always required** at startup
+- Rules are cached in-memory for performance
+- If it fails at runtime, app continues with cached rules
+- New rules cannot be added/updated while offline
+
+⚠️ **Fallback Limitations (Rate Limit Cluster):**
+- In-memory data is **per-instance** (not distributed)
+- Data is **lost on restart** (non-persistent)
+- Best for **development**, **testing**, or **temporary resilience**
+- **Not recommended** for production multi-instance deployments
+
+✅ **Best For:**
+- Development without Rate Limit Cluster dependency
+- Handling temporary cluster outages
+- Single-instance deployments
+
+📖 **Full Documentation**: See [REDIS_FALLBACK.md](../../REDIS_FALLBACK.md) for complete details, logging behavior, and best practices.

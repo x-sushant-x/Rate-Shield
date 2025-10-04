@@ -22,12 +22,15 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 - **Customizable Limiting:** <br>
    Tailor rate limiting rules to each API endpoint according to your needs.
-   
+
 - **Intuitive Dashboard:** <br>
    A user-friendly interface to monitor and manage all your rate limits effectively.
-   
+
 - **Easy Integration:** <br>
    Plug-and-play middleware that seamlessly integrates into your existing infrastructure.
+
+- **Redis Fallback (Optional):** <br>
+   Automatic in-memory fallback when Redis is unavailable, ensuring continuous operation even during Redis outages.
 
 ---
 
@@ -49,8 +52,11 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 
 ---
 
-#### 🪧 Usage Guide
-  Check out this [document](https://github.com/x-sushant-x/Rate-Shield/tree/main/rate_shield/documentation).
+#### 🪧 Documentation
+
+- **Usage Guide**: Check out this [document](https://github.com/x-sushant-x/Rate-Shield/tree/main/rate_shield/documentation)
+- **Setup Guide**: See [SETUP.md](./SETUP.md) for installation and configuration
+- **Redis Fallback**: Learn about the [in-memory fallback feature](./REDIS_FALLBACK.md) for Redis resilience
 
 ---
 
