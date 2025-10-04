@@ -32,29 +32,35 @@ func main() {
 	fallbackEnabled := utils.GetRedisFallbackEnabled()
 
 	if fallbackEnabled {
-		log.Info().Msg("Redis fallback is ENABLED - will use in-memory storage if Redis is unavailable")
+		log.Info().Msg("Redis fallback is ENABLED for rate limit cluster only (rules instance always required)")
 	} else {
-		log.Info().Msg("Redis fallback is DISABLED - application will fail if Redis is unavailable")
+		log.Info().Msg("Redis fallback is DISABLED")
 	}
 
-	redisRulesClient, err := redisClient.NewRulesClient()
+	// ========================================
+	// Rules Redis Instance - ALWAYS REQUIRED
+	// ========================================
+	log.Info().Msg("Connecting to Rules Redis instance (required)...")
+	redisRulesClient, rulesInstanceClient, err := redisClient.NewRulesClient()
 	if err != nil {
-		if !fallbackEnabled {
-			log.Fatal().Err(err)
-		}
-		log.Warn().Msg("Redis rules client unavailable, continuing with fallback")
+		log.Fatal().Err(err).Msg("Rules Redis instance is required - cannot start without it")
 	}
+	log.Info().Msg("Rules Redis instance connected successfully ✅")
 
 	slackSvc := service.NewSlackService(slackToken, slackChannelID)
-
 	errorNotificationSvc := service.NewErrorNotificationSVC(*slackSvc)
+	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
 
+	// ========================================
+	// Rate Limit Cluster - Supports Fallback
+	// ========================================
+	log.Info().Msg("Connecting to Rate Limit Redis Cluster...")
 	redisRateLimiter, clusterClient, err := redisClient.NewRedisRateLimitClient()
 	if err != nil {
 		if !fallbackEnabled {
-			log.Fatal().Err(err)
+			log.Fatal().Err(err).Msg("Rate Limit Redis Cluster is required (fallback disabled)")
 		}
-		log.Warn().Msg("Redis rate limit client unavailable, initializing in-memory fallback")
+		log.Warn().Msg("Rate Limit Redis Cluster unavailable, initializing in-memory fallback")
 
 		// Initialize in-memory stores
 		memoryStore := fallback.NewInMemoryRateLimitStore()
@@ -64,46 +70,38 @@ func main() {
 		rateLimitClient := fallback.NewFallbackRateLimitClient(nil, memoryStore)
 		slidingWindowClient := fallback.NewFallbackSlidingWindowClient(nil, memorySWStore)
 
-		// Mark as unavailable from the start
-		rateLimitClient.RestoreRedis() // This won't actually restore, just sets the state
-
 		// Create services with fallback clients
 		tokenBucketSvc := limiter.NewTokenBucketService(rateLimitClient, errorNotificationSvc)
 		fixedWindowSvc := limiter.NewFixedWindowService(rateLimitClient)
-
-		redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
-
 		slidingWindowSvc := limiter.NewSlidingWindowService(slidingWindowClient)
 
-		limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
-		limiter.StartRateLimiter()
+		rateLimiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
+		rateLimiter.StartRateLimiter()
 
-		// Start health monitor to check for Redis recovery
-		if clusterClient != nil {
-			retryInterval := utils.GetRedisRetryInterval()
-			healthMonitor := fallback.NewRedisHealthMonitor(clusterClient, rateLimitClient, slidingWindowClient, retryInterval)
-			healthMonitor.Start()
-		}
+		// Start rules health monitor
+		retryInterval := utils.GetRedisRetryInterval()
+		rulesHealthMonitor := fallback.NewRulesHealthMonitor(rulesInstanceClient, &rateLimiter, retryInterval)
+		rulesHealthMonitor.Start()
 
-		server := api.NewServer(&limiter)
+		log.Warn().Msg("Rate Limit Cluster health monitoring unavailable (cluster failed at startup)")
+
+		server := api.NewServer(&rateLimiter)
 		log.Fatal().Err(server.StartServer())
 		return
 	}
+	log.Info().Msg("Rate Limit Redis Cluster connected successfully ✅")
 
-	// Normal flow when Redis is available
-	tokenBucketSvc := limiter.NewTokenBucketService(redisRateLimiter, errorNotificationSvc)
-	fixedWindowSvc := limiter.NewFixedWindowService(redisRateLimiter)
-	redisRulesSvc := service.NewRedisRulesService(redisRulesClient)
-
-	// Create sliding window client with interface
+	// ========================================
+	// Both Redis Instances Available
+	// ========================================
 	slidingWindowClient := redisClient.NewSlidingWindowClient(clusterClient)
 
-	// If fallback is enabled, wrap with fallback client
+	// Determine if we should wrap with fallback support
 	var finalSWClient redisClient.SlidingWindowClient = slidingWindowClient
 	var finalRateLimitClient redisClient.RedisRateLimiterClient = redisRateLimiter
 
 	if fallbackEnabled {
-		log.Info().Msg("Wrapping Redis clients with fallback support")
+		log.Info().Msg("Wrapping Rate Limit Cluster clients with fallback support")
 		memoryStore := fallback.NewInMemoryRateLimitStore()
 		memorySWStore := fallback.NewInMemorySlidingWindowStore()
 
@@ -113,22 +111,34 @@ func main() {
 		finalRateLimitClient = rateLimitFallback
 		finalSWClient = slidingWindowFallback
 
-		// Start health monitor
+		// Start health monitors
 		retryInterval := utils.GetRedisRetryInterval()
-		healthMonitor := fallback.NewRedisHealthMonitor(clusterClient, rateLimitFallback, slidingWindowFallback, retryInterval)
-		healthMonitor.Start()
 
-		// Recreate services with fallback clients
-		tokenBucketSvc = limiter.NewTokenBucketService(finalRateLimitClient, errorNotificationSvc)
-		fixedWindowSvc = limiter.NewFixedWindowService(finalRateLimitClient)
+		// Monitor rate limit cluster
+		rateLimitHealthMonitor := fallback.NewRedisHealthMonitor(clusterClient, rateLimitFallback, slidingWindowFallback, retryInterval)
+		rateLimitHealthMonitor.Start()
+
+		// Monitor rules instance
+		rulesHealthMonitor := fallback.NewRulesHealthMonitor(rulesInstanceClient, nil, retryInterval)
+		rulesHealthMonitor.Start()
 	}
 
+	// Create services
+	tokenBucketSvc := limiter.NewTokenBucketService(finalRateLimitClient, errorNotificationSvc)
+	fixedWindowSvc := limiter.NewFixedWindowService(finalRateLimitClient)
 	slidingWindowSvc := limiter.NewSlidingWindowService(finalSWClient)
 
-	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
-	limiter.StartRateLimiter()
+	rateLimiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
+	rateLimiter.StartRateLimiter()
 
-	server := api.NewServer(&limiter)
+	// Start rules health monitor (always, regardless of fallback setting)
+	if fallbackEnabled {
+		retryInterval := utils.GetRedisRetryInterval()
+		rulesHealthMonitor := fallback.NewRulesHealthMonitor(rulesInstanceClient, &rateLimiter, retryInterval)
+		rulesHealthMonitor.Start()
+	}
+
+	server := api.NewServer(&rateLimiter)
 	log.Fatal().Err(server.StartServer())
 
 }

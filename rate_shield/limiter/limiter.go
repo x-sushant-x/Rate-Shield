@@ -128,11 +128,16 @@ func (l *Limiter) listenToRulesUpdate() {
 		data := <-updatesChannel
 
 		if data == "UpdateRules" {
-			l.rulesMutex.Lock()
-			l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
-			l.rulesMutex.Unlock()
-
-			log.Info().Msg("Rules Updated Successfully")
+			l.RefreshCachedRules()
 		}
 	}
+}
+
+// RefreshCachedRules refreshes the locally cached rules from Redis
+func (l *Limiter) RefreshCachedRules() {
+	l.rulesMutex.Lock()
+	defer l.rulesMutex.Unlock()
+
+	l.cachedRules = l.redisRuleSvc.CacheRulesLocally()
+	log.Info().Msgf("Rules cache refreshed - Total Rules: %d", len(*l.cachedRules))
 }
