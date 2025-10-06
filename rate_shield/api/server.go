@@ -73,7 +73,7 @@ func (s Server) rulesRoutes(mux *http.ServeMux) {
 	}
 
 	// Create audit client and service
-	auditClient := redisClient.NewAuditClient(redisRuleClient.(*redisClient.RedisRules).GetClient())
+	auditClient := redisClient.NewAuditClient(redisRuleClient.(redisClient.RedisRules).GetClient())
 	auditSvc := service.NewAuditService(auditClient)
 
 	// Create rules service with audit service
@@ -94,7 +94,7 @@ func (s Server) auditRoutes(mux *http.ServeMux) {
 	}
 
 	// Create audit client and service
-	auditClient := redisClient.NewAuditClient(redisRuleClient.(*redisClient.RedisRules).GetClient())
+	auditClient := redisClient.NewAuditClient(redisRuleClient.(redisClient.RedisRules).GetClient())
 	auditSvc := service.NewAuditService(auditClient)
 	auditHandler := NewAuditAPIHandler(auditSvc)
 

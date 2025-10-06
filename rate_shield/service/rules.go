@@ -49,6 +49,11 @@ func (s RulesServiceRedis) GetAllRules() ([]models.Rule, error) {
 	rules := []models.Rule{}
 
 	for _, key := range keys {
+		// Skip audit logs key
+		if key == "audit:logs" {
+			continue
+		}
+
 		rule, found, err := s.redisClient.GetRule(key)
 
 		if !found {
