@@ -112,7 +112,7 @@ func (s Server) setupHome(mux *http.ServeMux) {
 
 		wd, wdError := os.Getwd()
 
-		homepage, err := os.ReadFile(wd + "/api/" + "index.html")
+		homepage, err := os.ReadFile(wd + "/static/" + "index.html")
 		if err != nil || wdError != nil {
 			fmt.Println(err)
 			w.Write([]byte("Rate Shield is running. Open frontend client on port 5173. If it does not work make sure react application is running."))
