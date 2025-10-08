@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package ratelimit;
+
+option go_package = "github.com/x-sushant-x/RateShield/ratelimitpb;ratelimitpb;";
+
+service RateLimitService {
+    rpc CheckRateLimit(RateLimitRequest) returns (RateLimitResponse);
+}
+
+message RateLimitRequest {
+    string ip = 1;
+    string endpoint = 2;
+};
+
+message RateLimitResponse {
+    int32 http_status_code = 1;
+    int32 limit = 2;
+    int32 remaining = 3;
+};
