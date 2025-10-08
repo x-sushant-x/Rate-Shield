@@ -57,9 +57,16 @@ func main() {
 	limiter := limiter.NewRateLimiterService(&tokenBucketSvc, &fixedWindowSvc, &slidingWindowSvc, redisRulesSvc)
 	limiter.StartRateLimiter()
 
-	server := api.NewServer(&limiter)
-	log.Fatal().Err(server.StartServer())
+	go func() {
+		server := api.NewServer(&limiter)
+		log.Fatal().Err(server.StartServer())
+	}()
 
+	go func() {
+		api.StartGRPCServer(&limiter, "50051")
+	}()
+
+	select {}
 }
 
 func loadENVFile() {
