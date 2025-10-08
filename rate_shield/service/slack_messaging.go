@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 
 	"github.com/rs/zerolog/log"
@@ -68,6 +69,7 @@ func (s *SlackService) sendRequestToSlackAPI(req *http.Request) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		err = fmt.Errorf("received non-OK response from Slack: %s", resp.Status)
 		log.Err(err).Msgf("received non-OK response from Slack: %s", resp.Status)
 		return err
 	}

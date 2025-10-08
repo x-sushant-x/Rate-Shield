@@ -106,14 +106,15 @@ func (fw *FixedWindowService) getFixedWindowFromRedis(key string) (*models.Fixed
 }
 
 func (fw *FixedWindowService) makeFixedWindowCounter(ip, endpoint string, rule *models.Rule) models.FixedWindowCounter {
+	now := time.Now().Unix()
 	return models.FixedWindowCounter{
 		Endpoint:       endpoint,
 		ClientIP:       ip,
-		CreatedAt:      time.Now().Unix(),
+		CreatedAt:      now,
 		MaxRequests:    rule.FixedWindowCounterRule.MaxRequests,
 		CurrRequests:   1,
 		Window:         rule.FixedWindowCounterRule.Window,
-		LastAccessTime: time.Now().Unix(),
+		LastAccessTime: now,
 	}
 }
 

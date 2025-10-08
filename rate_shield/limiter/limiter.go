@@ -57,10 +57,6 @@ func (l *Limiter) CheckLimit(ip, endpoint string) *models.RateLimitResponse {
 		}
 	}
 
-	if !found {
-		return utils.BuildRateLimitSuccessResponse(0, 0)
-	}
-
 	return utils.BuildRateLimitSuccessResponse(0, 0)
 }
 
