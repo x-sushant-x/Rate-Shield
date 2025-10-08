@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/x-sushant-x/RateShield/models"
 	"github.com/x-sushant-x/RateShield/service"
@@ -17,6 +18,61 @@ func NewRulesAPIHandler(svc service.RulesService) RulesAPIHandler {
 	return RulesAPIHandler{
 		rulesSvc: svc,
 	}
+}
+
+// extractActorInfo extracts actor information from request headers
+// Priority: X-User-ID > Authorization (parsed) > "anonymous"
+func extractActorInfo(r *http.Request) string {
+	// Check for X-User-ID header first
+	userID := r.Header.Get("X-User-ID")
+	if userID != "" {
+		return userID
+	}
+
+	// Check Authorization header and try to extract user info
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" {
+		// Simple extraction: remove "Bearer " prefix if present
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			token := strings.TrimPrefix(authHeader, "Bearer ")
+			// Return first 8 characters of token as identifier
+			if len(token) > 8 {
+				return "token:" + token[:8] + "..."
+			}
+			return "token:" + token
+		}
+		return "auth:provided"
+	}
+
+	// Default to anonymous
+	return "anonymous"
+}
+
+// extractIPAddress extracts the client IP address from the request
+func extractIPAddress(r *http.Request) string {
+	// Check for X-Forwarded-For header (common with proxies/load balancers)
+	xff := r.Header.Get("X-Forwarded-For")
+	if xff != "" {
+		// X-Forwarded-For can contain multiple IPs, take the first one
+		ips := strings.Split(xff, ",")
+		if len(ips) > 0 {
+			return strings.TrimSpace(ips[0])
+		}
+	}
+
+	// Check for X-Real-IP header
+	realIP := r.Header.Get("X-Real-IP")
+	if realIP != "" {
+		return realIP
+	}
+
+	// Fall back to RemoteAddr
+	// RemoteAddr includes port, so we need to strip it
+	ip := r.RemoteAddr
+	if idx := strings.LastIndex(ip, ":"); idx != -1 {
+		ip = ip[:idx]
+	}
+	return ip
 }
 
 func (h RulesAPIHandler) ListAllRules(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +135,13 @@ func (h RulesAPIHandler) CreateOrUpdateRule(w http.ResponseWriter, r *http.Reque
 			utils.BadRequestError(w)
 			return
 		}
-		err = h.rulesSvc.CreateOrUpdateRule(updateReq)
+
+		// Extract audit information
+		actor := extractActorInfo(r)
+		ipAddress := extractIPAddress(r)
+		userAgent := r.UserAgent()
+
+		err = h.rulesSvc.CreateOrUpdateRule(updateReq, actor, ipAddress, userAgent)
 		if err != nil {
 			utils.InternalError(w, err.Error())
 			return
@@ -99,7 +161,12 @@ func (h RulesAPIHandler) DeleteRule(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err = h.rulesSvc.DeleteRule(deleteReq.RuleKey)
+		// Extract audit information
+		actor := extractActorInfo(r)
+		ipAddress := extractIPAddress(r)
+		userAgent := r.UserAgent()
+
+		err = h.rulesSvc.DeleteRule(deleteReq.RuleKey, actor, ipAddress, userAgent)
 		if err != nil {
 			utils.InternalError(w, err.Error())
 			return
