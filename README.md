@@ -62,6 +62,34 @@ Why not? With some free time on hand, RateShield was created to explore the pote
 #### How it works?
 <img src="https://raw.githubusercontent.com/x-sushant-x/Rate-Shield/main/assets/architecture.png"></img>
 
+---
+
+#### 📋 **Prerequisites**
+
+Before setting up RateShield, ensure you have the following:
+
+- **Docker & Docker Compose** - Required for running the application and Redis infrastructure
+- **Redis Stack** (included in docker-compose):
+  - Single Redis instance for storing rate limit rules (port 6379)
+  - Redis Cluster with 6 nodes (3 masters + 3 replicas) for distributed rate limiting (ports 7000-7005)
+  - ReJSON module enabled (automatically included with redis/redis-stack image)
+- **Slack Integration** (for error notifications):
+  - Slack Bot Token
+  - Slack Channel ID
+
+**Quick Start with Docker Compose:**
+
+The provided `docker-compose.yml` includes everything you need - no separate Redis setup required!
+
+```bash
+cd rate_shield
+cp .env.example .env
+# Edit .env with your Slack credentials
+docker-compose up -d
+```
+
+For detailed setup instructions, see [SETUP.md](SETUP.md).
+
  ---
 
 #### 🤝 **Contributing**

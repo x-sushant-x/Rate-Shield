@@ -1,21 +1,163 @@
 version: '3.8'
 
 services:
-  app:
-    build: .
-    ports:
-      - "8080:8080"
-    depends_on:
-      - redis
-  redis:
-    image: redis/redis-stack
+  # Single Redis instance for storing rate limit rules
+  redis-rules:
+    image: redis/redis-stack:latest
+    container_name: redis-rules
     volumes:
-      - redis_data:/data:rw
+      - redis_rules_data:/data:rw
     ports:
-      - 6379:6379
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - rate-shield-network
+
+  # Redis Cluster nodes for distributed rate limiting
+  redis-node-1:
+    image: redis/redis-stack:latest
+    container_name: redis-node-1
+    command: redis-server --port 7000 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    volumes:
+      - redis_cluster_data_1:/data
+    ports:
+      - "7000:7000"
+    networks:
+      - rate-shield-network
+
+  redis-node-2:
+    image: redis/redis-stack:latest
+    container_name: redis-node-2
+    command: redis-server --port 7001 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    volumes:
+      - redis_cluster_data_2:/data
+    ports:
+      - "7001:7001"
+    networks:
+      - rate-shield-network
+
+  redis-node-3:
+    image: redis/redis-stack:latest
+    container_name: redis-node-3
+    command: redis-server --port 7002 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    volumes:
+      - redis_cluster_data_3:/data
+    ports:
+      - "7002:7002"
+    networks:
+      - rate-shield-network
+
+  redis-node-4:
+    image: redis/redis-stack:latest
+    container_name: redis-node-4
+    command: redis-server --port 7003 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    volumes:
+      - redis_cluster_data_4:/data
+    ports:
+      - "7003:7003"
+    networks:
+      - rate-shield-network
+
+  redis-node-5:
+    image: redis/redis-stack:latest
+    container_name: redis-node-5
+    command: redis-server --port 7004 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    volumes:
+      - redis_cluster_data_5:/data
+    ports:
+      - "7004:7004"
+    networks:
+      - rate-shield-network
+
+  redis-node-6:
+    image: redis/redis-stack:latest
+    container_name: redis-node-6
+    command: redis-server --port 7005 --cluster-enabled yes --cluster-config-file nodes.conf --cluster-node-timeout 5000 --appendonly yes --protected-mode no
+    volumes:
+      - redis_cluster_data_6:/data
+    ports:
+      - "7005:7005"
+    networks:
+      - rate-shield-network
+
+  # Cluster initialization service
+  redis-cluster-init:
+    image: redis/redis-stack:latest
+    container_name: redis-cluster-init
+    depends_on:
+      - redis-node-1
+      - redis-node-2
+      - redis-node-3
+      - redis-node-4
+      - redis-node-5
+      - redis-node-6
+    command: >
+      sh -c "
+      sleep 10 &&
+      redis-cli --cluster create
+      redis-node-1:7000
+      redis-node-2:7001
+      redis-node-3:7002
+      redis-node-4:7003
+      redis-node-5:7004
+      redis-node-6:7005
+      --cluster-replicas 1
+      --cluster-yes
+      "
+    networks:
+      - rate-shield-network
+
+  # RedisInsight for cluster monitoring
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "8001:5540"
+    volumes:
+      - redisinsight_data:/data
+    networks:
+      - rate-shield-network
     restart: unless-stopped
 
+  # RateShield application
+  app:
+    build: .
+    container_name: rate-shield-app
+    ports:
+      - "8080:8080"
+    environment:
+      - RATE_SHIELD_PORT=8080
+      - REDIS_RULES_INSTANCE_URL=redis-rules:6379
+      - REDIS_RULES_INSTANCE_PASSWORD=
+      - REDIS_CLUSTERS_URLS=redis-node-1:7000,redis-node-2:7001,redis-node-3:7002,redis-node-4:7003,redis-node-5:7004,redis-node-6:7005
+      - REDIS_CLUSTER_PASSWORD=
+      - SLACK_TOKEN=${SLACK_TOKEN}
+      - SLACK_CHANNEL=${SLACK_CHANNEL}
+    depends_on:
+      - redis-rules
+      - redis-cluster-init
+    networks:
+      - rate-shield-network
+    restart: unless-stopped
+
+networks:
+  rate-shield-network:
+    driver: bridge
 
 volumes:
-  redis_data:
+  redis_rules_data:
+    driver: local
+  redis_cluster_data_1:
+    driver: local
+  redis_cluster_data_2:
+    driver: local
+  redis_cluster_data_3:
+    driver: local
+  redis_cluster_data_4:
+    driver: local
+  redis_cluster_data_5:
+    driver: local
+  redis_cluster_data_6:
+    driver: local
+  redisinsight_data:
     driver: local
