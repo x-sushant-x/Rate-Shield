@@ -7,7 +7,7 @@ export function AuthPage() {
                 {/* Header */}
                 <div className="bg-gray-800 p-4 rounded-t-2xl flex justify-between items-center">
                     <img src={logo} alt="Logo" className="h-8" />
-                    <p className="text-gray-100 cursor-pointer hover:underline">Create Account</p>
+                    <p className="text-gray-100 cursor-pointer hover:underline">Default Credentials</p>
                 </div>
 
                 {/* Auth Form */}

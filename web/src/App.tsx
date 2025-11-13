@@ -1,7 +1,8 @@
 import { AuthPage } from "./pages/Auth"
+import Dashboard from "./pages/Dashboard"
 
 function App() {
-    return (<AuthPage />)
+    return (<Dashboard />)
 }
 
 export default App
