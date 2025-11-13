@@ -33,6 +33,9 @@ func main() {
 		log.Fatal().Err(err)
 	}
 
+	authSvc := service.NewAuthService(redisClient.RuleClientConn)
+	authSvc.InitializeDefaultCreds()
+
 	// Create audit client and service
 	auditClient := redisClient.NewAuditClient(redisRulesClient.(redisClient.RedisRules).GetClient())
 	auditSvc := service.NewAuditService(auditClient)

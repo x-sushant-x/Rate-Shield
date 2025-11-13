@@ -2,6 +2,7 @@ package redisClient
 
 import (
 	"context"
+
 	"github.com/redis/go-redis/v9"
 	"github.com/rs/zerolog/log"
 	"github.com/x-sushant-x/RateShield/utils"
@@ -10,6 +11,7 @@ import (
 var (
 	ctx               = context.Background()
 	TokenBucketClient *redis.ClusterClient
+	RuleClientConn    *redis.Client
 )
 
 func createNewRedisConnection(addr, password string) (*redis.Client, error) {
@@ -54,6 +56,8 @@ func NewRulesClient() (RedisRuleClient, error) {
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to connect to redis rules instance: " + url)
 	}
+
+	RuleClientConn = client
 
 	return RedisRules{
 		client: client,
