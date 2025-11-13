@@ -32,6 +32,7 @@ func (s Server) StartServer() error {
 	s.auditRoutes(mux)
 	s.registerRateLimiterRoutes(mux)
 	s.setupHome(mux)
+	s.setupAuthRoutes(mux)
 
 	corsMux := s.setupCORS(mux)
 
@@ -134,4 +135,10 @@ func getPort() int {
 	}
 
 	return portInt
+}
+
+func (s Server) setupAuthRoutes(mux *http.ServeMux) {
+	authService := service.NewAuthService(redisClient.RuleClientConn)
+	authHandler := NewAuthAPIHandler(*authService)
+	mux.HandleFunc("/login", authHandler.HandleLogin)
 }

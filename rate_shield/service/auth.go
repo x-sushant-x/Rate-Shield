@@ -32,7 +32,7 @@ func NewAuthService(instance *redis.Client) *AuthService {
 func (as *AuthService) InitializeDefaultCreds() {
 	ctx := context.Background()
 
-	if as.isAccountExist(ctx) {
+	if as.doesAccountExist(ctx, DEFAULT_USER_KEY_REDIS) {
 		return
 	}
 
@@ -55,8 +55,8 @@ func (as *AuthService) InitializeDefaultCreds() {
 	log.Info().Msg(credsLog)
 }
 
-func (as *AuthService) isAccountExist(ctx context.Context) bool {
-	found, err := as.redis.Exists(ctx, DEFAULT_USER_KEY_REDIS).Result()
+func (as *AuthService) doesAccountExist(ctx context.Context, accountKey string) bool {
+	found, err := as.redis.Exists(ctx, accountKey).Result()
 
 	if err != nil {
 		log.Err(err).Msgf("failed to check existing creds: %v", err)
@@ -64,7 +64,6 @@ func (as *AuthService) isAccountExist(ctx context.Context) bool {
 	}
 
 	if found > 0 {
-		log.Info().Msg("Dashboard credentials already exists. Use them to login.")
 		return true
 	}
 
@@ -79,7 +78,7 @@ func (as *AuthService) generateDefaultCreds() (string, string, []byte, error) {
 		pass[i] = letterBytes[src.Intn(len(letterBytes))]
 	}
 
-	email := "admin@rate-shield.io"
+	email := "default"
 	password := string(pass)
 
 	hashPass, err := bcrypt.GenerateFromPassword(pass, bcrypt.DefaultCost)
@@ -90,4 +89,28 @@ func (as *AuthService) generateDefaultCreds() (string, string, []byte, error) {
 	}
 
 	return email, password, hashPass, err
+}
+
+func (as *AuthService) LoginUser(email, pass string) error {
+	ctx := context.Background()
+
+	redisKey := "user:" + email
+
+	if !as.doesAccountExist(ctx, redisKey) {
+		return fmt.Errorf("account does not exists with email: %s", email)
+	}
+
+	res, err := as.redis.HMGet(ctx, redisKey, "password").Result()
+	if err != nil || res == nil || len(res) == 0 {
+		return fmt.Errorf("unable to verify your account")
+	}
+
+	password := res[0].(string)
+
+	err = bcrypt.CompareHashAndPassword([]byte(password), []byte(pass))
+	if err != nil {
+		return fmt.Errorf("invalid password")
+	}
+
+	return nil
 }
