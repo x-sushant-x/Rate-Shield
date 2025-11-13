@@ -141,4 +141,5 @@ func (s Server) setupAuthRoutes(mux *http.ServeMux) {
 	authService := service.NewAuthService(redisClient.RuleClientConn)
 	authHandler := NewAuthAPIHandler(*authService)
 	mux.HandleFunc("/login", authHandler.HandleLogin)
+	mux.HandleFunc("/create-user", authHandler.HandleCreateUser)
 }

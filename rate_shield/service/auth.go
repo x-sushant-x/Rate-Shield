@@ -112,5 +112,36 @@ func (as *AuthService) LoginUser(email, pass string) error {
 		return fmt.Errorf("invalid password")
 	}
 
+	// Serve JWT Token
+
+	return nil
+}
+
+func (as *AuthService) CreateUser(email, pass string) error {
+	ctx := context.Background()
+
+	redisKey := "user:" + email
+
+	if as.doesAccountExist(ctx, redisKey) {
+		return fmt.Errorf("account already exists with email: %s", email)
+	}
+
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+
+	if err != nil {
+		log.Err(err).Msgf("failed to hash default creds: %v", err)
+		return fmt.Errorf("unable to create user account")
+	}
+
+	err = as.redis.HSet(ctx, DEFAULT_USER_KEY_REDIS, map[string]string{
+		"email":    email,
+		"password": string(hashedPass),
+	}).Err()
+
+	if err != nil {
+		log.Err(err).Msgf("failed to store default creds: %v", err)
+		return fmt.Errorf("unable to create user account")
+	}
+
 	return nil
 }

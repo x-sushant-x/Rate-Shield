@@ -2,8 +2,10 @@ package utils
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 func ParseAPIBody[T any](r *http.Request) (T, error) {
@@ -18,4 +20,14 @@ func ParseAPIBody[T any](r *http.Request) (T, error) {
 		return req, err
 	}
 	return req, nil
+}
+
+func ExtractAuthToken(r *http.Request) (string, error) {
+	header := r.Header.Get("Authorization")
+
+	if header == "" || strings.HasPrefix(header, "Bearer ") {
+		return "", fmt.Errorf("user not logged in")
+	}
+
+	return header[7:], nil
 }
